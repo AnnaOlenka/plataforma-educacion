@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: edupath
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edupath-config
+  namespace: edupath
+data:
+  DJANGO_ALLOWED_HOSTS: "*"
+  DJANGO_DEBUG: "false"
+  POSTGRES_HOST: postgres
+  POSTGRES_DB: edupath
+  POSTGRES_PORT: "5432"
+  CORS_ALLOWED_ORIGINS: "https://edupath.example.com"
+  CSRF_TRUSTED_ORIGINS: "https://edupath.example.com"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: edupath-secrets
+  namespace: edupath
+type: Opaque
+stringData:
+  DJANGO_SECRET_KEY: "replace-with-strong-secret"
+  POSTGRES_USER: edupath
+  POSTGRES_PASSWORD: "replace-db-password"
+  LEGACY_SYNC_API_KEY: "replace-legacy-key"
+  CERT_SIGNING_SECRET: "replace-hmac-secret"

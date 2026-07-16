@@ -1,0 +1,16 @@
+# Requiere Prometheus Operator instalado en el cluster
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: edupath-backend
+  namespace: edupath
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: edupath-backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

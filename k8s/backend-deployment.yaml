@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edupath-backend
+  namespace: edupath
+  labels:
+    app: edupath-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: edupath-backend
+  template:
+    metadata:
+      labels:
+        app: edupath-backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: backend
+          image: edupath/backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: edupath-config
+            - secretRef:
+                name: edupath-secrets
+          env:
+            - name: GUNICORN_WORKERS
+              value: "3"
+            - name: GUNICORN_THREADS
+              value: "2"
+          readinessProbe:
+            httpGet:
+              path: /readyz/
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz/
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edupath-backend
+  namespace: edupath
+  labels:
+    app: edupath-backend
+spec:
+  selector:
+    app: edupath-backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+  type: ClusterIP
+---
+# Escalado horizontal validado ante picos de evaluación
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: edupath-backend-hpa
+  namespace: edupath
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: edupath-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70

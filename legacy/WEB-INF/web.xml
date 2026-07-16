@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0"
+         metadata-complete="false">
+  <display-name>EduPath Legacy Enrollment</display-name>
+  <context-param>
+    <param-name>django.sync.url</param-name>
+    <param-value>http://backend:8000/api/legacy/enrollment-sync/</param-value>
+  </context-param>
+  <context-param>
+    <param-name>django.sync.apiKey</param-name>
+    <param-value>legacy-dev-key</param-value>
+  </context-param>
+  <!-- Multipart requerido para upload CSV -->
+  <multipart-config>
+    <!-- aplicado vía @MultipartConfig en servlet wrapper si se empaqueta como WAR -->
+  </multipart-config>
+</web-app>

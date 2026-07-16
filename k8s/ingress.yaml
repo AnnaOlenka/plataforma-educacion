@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: edupath-ingress
+  namespace: edupath
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: edupath.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: edupath-backend
+                port:
+                  number: 8000
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: edupath-backend
+                port:
+                  number: 8000
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: edupath-backend
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: edupath-frontend
+                port:
+                  number: 80
