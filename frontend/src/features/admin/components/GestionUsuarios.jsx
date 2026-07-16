@@ -55,7 +55,7 @@ export default function GestionUsuarios() {
   const onCrear = async (values) => {
     setApiError('')
     try {
-      await createUsuario(values)
+      await createUsuario({ ...values, is_active: values.is_active === 'true' || values.is_active === true })
       createForm.reset(); setShowModal(false); fetchUsuarios()
     } catch (err) {
       const data = err.response?.data
@@ -65,14 +65,14 @@ export default function GestionUsuarios() {
 
   const openEdit = (u) => {
     setEditUser(u)
-    editForm.reset({ first_name: u.first_name, last_name: u.last_name, email: u.email, username: u.username })
+    editForm.reset({ first_name: u.first_name, last_name: u.last_name, email: u.email, username: u.username, is_active: String(u.is_active) })
     setApiError('')
   }
 
   const onEditar = async (values) => {
     setApiError('')
     try {
-      await updateUsuario(editUser.id, values)
+      await updateUsuario(editUser.id, { ...values, is_active: values.is_active === 'true' || values.is_active === true })
       setEditUser(null); fetchUsuarios()
     } catch (err) {
       const data = err.response?.data
@@ -275,7 +275,7 @@ export default function GestionUsuarios() {
                   <input type="password" placeholder="••••••••" {...createForm.register('password_confirm', { required: 'Requerido' })} />
                   {createForm.formState.errors.password_confirm && <span>{createForm.formState.errors.password_confirm.message}</span>}
                 </div>
-                <div className={`${styles.field} ${styles.fullWidth}`}>
+                <div className={styles.field}>
                   <label>Rol</label>
                   <select {...createForm.register('rol', { required: 'Requerido' })}>
                     <option value="">Seleccionar rol</option>
@@ -285,6 +285,14 @@ export default function GestionUsuarios() {
                   </select>
                   {createForm.formState.errors.rol && <span>{createForm.formState.errors.rol.message}</span>}
                 </div>
+                <div className={styles.field}>
+                  <label>Estado</label>
+                  <select {...createForm.register('is_active')} defaultValue="true">
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
+                </div>
+
               </div>
               {apiError && <p className={styles.apiError}>{apiError}</p>}
               <div className={styles.modalFooter}>
@@ -330,6 +338,13 @@ export default function GestionUsuarios() {
                     pattern: { value: /\S+@\S+\.\S+/, message: 'Correo inválido' }
                   })} />
                   {editForm.formState.errors.email && <span>{editForm.formState.errors.email.message}</span>}
+                </div>
+                <div className={`${styles.field} ${styles.fullWidth}`}>
+                  <label>Estado</label>
+                  <select {...editForm.register('is_active')}>
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
                 </div>
               </div>
               {apiError && <p className={styles.apiError}>{apiError}</p>}

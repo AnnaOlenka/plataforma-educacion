@@ -21,6 +21,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "rol",
+            "is_active",
             "avatar",
             "bio",
             "fecha_registro",
@@ -37,6 +38,8 @@ class RegistroSerializer(serializers.ModelSerializer):
     )
     rol = serializers.ChoiceField(choices=ROLES_PUBLICOS, default=Usuario.Rol.ESTUDIANTE)
 
+    is_active = serializers.BooleanField(default=True, required=False)
+
     class Meta:
         model = Usuario
         fields = (
@@ -47,6 +50,7 @@ class RegistroSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "rol",
+            "is_active",
         )
 
     def validate_email(self, value):
