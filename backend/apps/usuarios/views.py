@@ -162,3 +162,41 @@ class PasswordResetConfirmView(APIView):
             {"detail": "Contraseña restablecida. Ya puedes iniciar sesión."},
             status=status.HTTP_200_OK,
         )
+
+
+class UsuarioAdminListView(generics.ListAPIView):
+    """GET /api/auth/users/ — lista todos los usuarios (solo admin)."""
+
+    serializer_class = UsuarioSerializer
+    permission_classes = [EsAdmin]
+
+    def get_queryset(self):
+        qs = Usuario.objects.all().order_by("fecha_registro")
+        rol = self.request.query_params.get("rol")
+        search = self.request.query_params.get("search")
+        if rol:
+            qs = qs.filter(rol=rol)
+        if search:
+            qs = qs.filter(username__icontains=search) | qs.filter(email__icontains=search)
+        return qs
+
+
+class UsuarioAdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """GET/PATCH/DELETE /api/auth/users/{id}/ — gestión individual (solo admin)."""
+
+    serializer_class = UsuarioSerializer
+    permission_classes = [EsAdmin]
+    queryset = Usuario.objects.all()
+
+    def get_serializer_class(self):
+        return UsuarioSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance == request.user:
+            return Response(
+                {"detail": "No puedes eliminar tu propia cuenta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)

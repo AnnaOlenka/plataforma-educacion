@@ -10,6 +10,8 @@ from .views import (
     RefreshView,
     RegistroAdminView,
     RegistroView,
+    UsuarioAdminDetailView,
+    UsuarioAdminListView,
 )
 
 urlpatterns = [
@@ -20,14 +22,8 @@ urlpatterns = [
     path("refresh/", RefreshView.as_view(), name="auth-refresh"),
     path("me/", MeView.as_view(), name="auth-me"),
     path("change-password/", ChangePasswordView.as_view(), name="auth-change-password"),
-    path(
-        "password-reset/",
-        PasswordResetRequestView.as_view(),
-        name="auth-password-reset",
-    ),
-    path(
-        "password-reset/confirm/",
-        PasswordResetConfirmView.as_view(),
-        name="auth-password-reset-confirm",
-    ),
+    path("password-reset/", PasswordResetRequestView.as_view(), name="auth-password-reset"),
+    path("password-reset/confirm/", PasswordResetConfirmView.as_view(), name="auth-password-reset-confirm"),
+    path("users/", UsuarioAdminListView.as_view(), name="admin-users-list"),
+    path("users/<int:pk>/", UsuarioAdminDetailView.as_view(), name="admin-users-detail"),
 ]

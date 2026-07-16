@@ -1,0 +1,1 @@
+﻿// Hook global de autenticación
