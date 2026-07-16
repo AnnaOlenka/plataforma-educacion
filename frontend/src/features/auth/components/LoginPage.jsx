@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../services/authService'
 import useAuthStore from '../../../store/authStore'
 import styles from './LoginPage.module.css'
@@ -116,6 +116,10 @@ export default function LoginPage() {
               {loading ? 'Ingresando...' : 'Iniciar sesión'}
             </button>
           </form>
+
+          <Link to="/forgot-password" className={styles.forgotLink}>
+            ¿Olvidaste tu contraseña?
+          </Link>
 
         </div>
 

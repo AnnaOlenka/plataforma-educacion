@@ -18,6 +18,12 @@ services:
       timeout: 5s
       retries: 10
 
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
   backend:
     build: ./backend
     environment:
@@ -34,11 +40,17 @@ services:
       LEGACY_SYNC_API_KEY: legacy-dev-key
       CERT_SIGNING_SECRET: cert-hmac-dev-secret
       GUNICORN_WORKERS: "3"
+      EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+      EMAIL_HOST: mailhog
+      EMAIL_PORT: "1025"
+      EMAIL_USE_TLS: "false"
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     profiles:
       - full
 

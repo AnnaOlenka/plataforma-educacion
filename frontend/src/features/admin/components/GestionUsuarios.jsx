@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { getUsuarios, createUsuario, deleteUsuario } from '../services/usuariosService'
+import { getUsuarios, createUsuario, deleteUsuario, updateUsuario } from '../services/usuariosService'
 import styles from './GestionUsuarios.module.css'
 
 const ROL_BADGE = {
@@ -10,42 +10,63 @@ const ROL_BADGE = {
 }
 
 export default function GestionUsuarios() {
-  const [usuarios, setUsuarios] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [search, setSearch]     = useState('')
-  const [rolFilter, setRolFilter] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [apiError, setApiError]   = useState('')
-  const [deleting, setDeleting]   = useState(null)
+  const [usuarios, setUsuarios]     = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [rolFilter, setRolFilter]   = useState('')
+  const [selected, setSelected]     = useState(new Set())
+  const [showModal, setShowModal]   = useState(false)
+  const [editUser, setEditUser]     = useState(null)
+  const [apiError, setApiError]     = useState('')
+  const [deleting, setDeleting]     = useState(null)
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
+  const createForm = useForm()
+  const editForm   = useForm()
 
   const fetchUsuarios = async () => {
     setLoading(true)
     try {
       const { data } = await getUsuarios({ search, rol: rolFilter })
       setUsuarios(Array.isArray(data) ? data : data.results ?? [])
-    } finally {
-      setLoading(false)
-    }
+      setSelected(new Set())
+    } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchUsuarios() }, [search, rolFilter])
+
+  const toggleAll = (e) => {
+    if (e.target.checked) setSelected(new Set(usuarios.map((u) => u.id)))
+    else setSelected(new Set())
+  }
+  const toggleOne = (id) => {
+    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
 
   const onCrear = async (values) => {
     setApiError('')
     try {
       await createUsuario(values)
-      reset()
-      setShowModal(false)
-      fetchUsuarios()
+      createForm.reset(); setShowModal(false); fetchUsuarios()
     } catch (err) {
       const data = err.response?.data
-      setApiError(
-        typeof data === 'string'
-          ? data
-          : Object.values(data || {}).flat().join(' ')
-      )
+      setApiError(typeof data === 'string' ? data : Object.values(data || {}).flat().join(' '))
+    }
+  }
+
+  const openEdit = (u) => {
+    setEditUser(u)
+    editForm.reset({ first_name: u.first_name, last_name: u.last_name, email: u.email, username: u.username })
+    setApiError('')
+  }
+
+  const onEditar = async (values) => {
+    setApiError('')
+    try {
+      await updateUsuario(editUser.id, values)
+      setEditUser(null); fetchUsuarios()
+    } catch (err) {
+      const data = err.response?.data
+      setApiError(typeof data === 'string' ? data : Object.values(data || {}).flat().join(' '))
     }
   }
 
@@ -55,53 +76,50 @@ export default function GestionUsuarios() {
     try {
       await deleteUsuario(id)
       setUsuarios((prev) => prev.filter((u) => u.id !== id))
-    } finally {
-      setDeleting(null)
-    }
+    } finally { setDeleting(null) }
   }
+
+  const allChecked = usuarios.length > 0 && selected.size === usuarios.length
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Gestión de Usuarios</h1>
-          <p className={styles.subtitle}>{usuarios.length} usuarios registrados</p>
-        </div>
-        <button className={styles.btnPrimary} onClick={() => { setShowModal(true); setApiError(''); reset() }}>
-          <IconPlus /> Nuevo Usuario
-        </button>
-      </header>
 
-      {/* Filtros */}
-      <div className={styles.toolbar}>
-        <div className={styles.searchWrap}>
-          <IconSearch />
-          <input
-            className={styles.searchInput}
-            placeholder="Buscar por nombre o correo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {/* Top bar */}
+      <div className={styles.topBar}>
+        <div className={styles.topBarLeft}>
+          <span className={styles.topTitle}>Todos los usuarios</span>
+          <span className={styles.countBadge}>{usuarios.length}</span>
         </div>
-        <select className={styles.select} value={rolFilter} onChange={(e) => setRolFilter(e.target.value)}>
-          <option value="">Todos los roles</option>
-          <option value="estudiante">Estudiante</option>
-          <option value="instructor">Instructor</option>
-          <option value="admin">Admin</option>
-        </select>
+        <div className={styles.topBarRight}>
+          <div className={styles.searchWrap}>
+            <IconSearch />
+            <input className={styles.searchInput} placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <select className={styles.filterPill} value={rolFilter} onChange={(e) => setRolFilter(e.target.value)}>
+            <option value="">Todos los roles</option>
+            <option value="estudiante">Estudiante</option>
+            <option value="instructor">Instructor</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button className={styles.btnPrimary} onClick={() => { setShowModal(true); setApiError(''); createForm.reset() }}>
+            <IconPlus /> Nuevo usuario
+          </button>
+        </div>
       </div>
 
-      {/* Tabla */}
+      {/* Table */}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Usuario</th>
-              <th>Correo</th>
-              <th>Rol</th>
-              <th>Registro</th>
-              <th>Estado</th>
-              <th></th>
+              <th className={styles.checkCol}>
+                <input type="checkbox" className={styles.checkbox} checked={allChecked} onChange={toggleAll} />
+              </th>
+              <th><span className={styles.thLabel}><IconUser /> Usuario <IconChevron /></span></th>
+              <th><span className={styles.thLabel}><IconRole /> Rol <IconChevron /></span></th>
+              <th><span className={styles.thLabel}><IconClock /> Estado <IconChevron /></span></th>
+              <th><span className={styles.thLabel}><IconCalendar /> Registro <IconChevron /></span></th>
+              <th><span className={styles.thLabel}>Acciones</span></th>
             </tr>
           </thead>
           <tbody>
@@ -111,43 +129,43 @@ export default function GestionUsuarios() {
               <tr><td colSpan={6} className={styles.empty}>No se encontraron usuarios</td></tr>
             ) : (
               usuarios.map((u) => (
-                <tr key={u.id}>
+                <tr key={u.id} className={selected.has(u.id) ? styles.rowSelected : ''}>
+                  <td className={styles.checkCol}>
+                    <input type="checkbox" className={styles.checkbox} checked={selected.has(u.id)} onChange={() => toggleOne(u.id)} />
+                  </td>
                   <td>
                     <div className={styles.userCell}>
-                      <div className={styles.miniAvatar}>
-                        {(u.first_name?.[0] || u.username?.[0] || '?').toUpperCase()}
-                      </div>
+                      <div className={styles.miniAvatar}><IconUserFill /></div>
                       <div>
                         <div className={styles.userName}>
                           {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}
                         </div>
-                        <div className={styles.userUsername}>@{u.username}</div>
+                        <div className={styles.userEmail}>{u.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className={styles.emailCell}>{u.email}</td>
                   <td>
                     <span className={`${styles.badge} ${ROL_BADGE[u.rol]?.cls}`}>
                       {ROL_BADGE[u.rol]?.label || u.rol}
                     </span>
                   </td>
+                  <td>
+                    {u.is_active
+                      ? <span className={styles.statusActive}><span className={styles.dot} /> Activo</span>
+                      : <span className={styles.statusInactive}><span className={styles.dot} /> Inactivo</span>}
+                  </td>
                   <td className={styles.dateCell}>
                     {new Date(u.fecha_registro).toLocaleDateString('es-PE')}
                   </td>
                   <td>
-                    <span className={u.is_active ? styles.activeChip : styles.inactiveChip}>
-                      {u.is_active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className={styles.btnDelete}
-                      onClick={() => onEliminar(u.id)}
-                      disabled={deleting === u.id}
-                      title="Eliminar usuario"
-                    >
-                      <IconTrash />
-                    </button>
+                    <div className={styles.actions}>
+                      <button className={styles.btnEdit} onClick={() => openEdit(u)} title="Editar">
+                        <IconEdit />
+                      </button>
+                      <button className={styles.btnDelete} onClick={() => onEliminar(u.id)} disabled={deleting === u.id} title="Eliminar">
+                        <IconTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -156,7 +174,7 @@ export default function GestionUsuarios() {
         </table>
       </div>
 
-      {/* Modal crear usuario */}
+      {/* Modal crear */}
       {showModal && (
         <div className={styles.overlay} onClick={() => setShowModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -164,59 +182,102 @@ export default function GestionUsuarios() {
               <h2>Nuevo Usuario</h2>
               <button className={styles.closeBtn} onClick={() => setShowModal(false)}><IconX /></button>
             </div>
-
-            <form onSubmit={handleSubmit(onCrear)} noValidate>
+            <form onSubmit={createForm.handleSubmit(onCrear)} noValidate>
               <div className={styles.formGrid}>
                 <div className={styles.field}>
                   <label>Nombre</label>
-                  <input placeholder="Nombre" {...register('first_name', { required: 'Requerido' })} />
-                  {errors.first_name && <span>{errors.first_name.message}</span>}
+                  <input placeholder="Nombre" {...createForm.register('first_name', { required: 'Requerido' })} />
+                  {createForm.formState.errors.first_name && <span>{createForm.formState.errors.first_name.message}</span>}
                 </div>
                 <div className={styles.field}>
                   <label>Apellido</label>
-                  <input placeholder="Apellido" {...register('last_name', { required: 'Requerido' })} />
-                  {errors.last_name && <span>{errors.last_name.message}</span>}
+                  <input placeholder="Apellido" {...createForm.register('last_name', { required: 'Requerido' })} />
+                  {createForm.formState.errors.last_name && <span>{createForm.formState.errors.last_name.message}</span>}
                 </div>
                 <div className={`${styles.field} ${styles.fullWidth}`}>
                   <label>Nombre de usuario</label>
-                  <input placeholder="username" {...register('username', { required: 'Requerido' })} />
-                  {errors.username && <span>{errors.username.message}</span>}
+                  <input placeholder="username" {...createForm.register('username', { required: 'Requerido' })} />
+                  {createForm.formState.errors.username && <span>{createForm.formState.errors.username.message}</span>}
                 </div>
                 <div className={`${styles.field} ${styles.fullWidth}`}>
                   <label>Correo electrónico</label>
-                  <input type="email" placeholder="correo@ejemplo.com" {...register('email', {
+                  <input type="email" placeholder="correo@ejemplo.com" {...createForm.register('email', {
                     required: 'Requerido',
                     pattern: { value: /\S+@\S+\.\S+/, message: 'Correo inválido' }
                   })} />
-                  {errors.email && <span>{errors.email.message}</span>}
+                  {createForm.formState.errors.email && <span>{createForm.formState.errors.email.message}</span>}
                 </div>
                 <div className={styles.field}>
                   <label>Contraseña</label>
-                  <input type="password" placeholder="••••••••" {...register('password', { required: 'Requerido', minLength: { value: 8, message: 'Mínimo 8 caracteres' } })} />
-                  {errors.password && <span>{errors.password.message}</span>}
+                  <input type="password" placeholder="••••••••" {...createForm.register('password', { required: 'Requerido', minLength: { value: 8, message: 'Mínimo 8 caracteres' } })} />
+                  {createForm.formState.errors.password && <span>{createForm.formState.errors.password.message}</span>}
                 </div>
                 <div className={styles.field}>
                   <label>Confirmar contraseña</label>
-                  <input type="password" placeholder="••••••••" {...register('password_confirm', { required: 'Requerido' })} />
-                  {errors.password_confirm && <span>{errors.password_confirm.message}</span>}
+                  <input type="password" placeholder="••••••••" {...createForm.register('password_confirm', { required: 'Requerido' })} />
+                  {createForm.formState.errors.password_confirm && <span>{createForm.formState.errors.password_confirm.message}</span>}
                 </div>
                 <div className={`${styles.field} ${styles.fullWidth}`}>
                   <label>Rol</label>
-                  <select {...register('rol', { required: 'Requerido' })}>
+                  <select {...createForm.register('rol', { required: 'Requerido' })}>
                     <option value="">Seleccionar rol</option>
                     <option value="estudiante">Estudiante</option>
                     <option value="instructor">Instructor</option>
                   </select>
-                  {errors.rol && <span>{errors.rol.message}</span>}
+                  {createForm.formState.errors.rol && <span>{createForm.formState.errors.rol.message}</span>}
                 </div>
               </div>
-
               {apiError && <p className={styles.apiError}>{apiError}</p>}
-
               <div className={styles.modalFooter}>
                 <button type="button" className={styles.btnSecondary} onClick={() => setShowModal(false)}>Cancelar</button>
-                <button type="submit" className={styles.btnPrimary} disabled={isSubmitting}>
-                  {isSubmitting ? 'Creando...' : 'Crear Usuario'}
+                <button type="submit" className={styles.btnPrimary} disabled={createForm.formState.isSubmitting}>
+                  {createForm.formState.isSubmitting ? 'Creando...' : 'Crear Usuario'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal editar */}
+      {editUser && (
+        <div className={styles.overlay} onClick={() => setEditUser(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Editar Usuario</h2>
+              <button className={styles.closeBtn} onClick={() => setEditUser(null)}><IconX /></button>
+            </div>
+            <form onSubmit={editForm.handleSubmit(onEditar)} noValidate>
+              <div className={styles.formGrid}>
+                <div className={styles.field}>
+                  <label>Nombre</label>
+                  <input placeholder="Nombre" {...editForm.register('first_name', { required: 'Requerido' })} />
+                  {editForm.formState.errors.first_name && <span>{editForm.formState.errors.first_name.message}</span>}
+                </div>
+                <div className={styles.field}>
+                  <label>Apellido</label>
+                  <input placeholder="Apellido" {...editForm.register('last_name', { required: 'Requerido' })} />
+                  {editForm.formState.errors.last_name && <span>{editForm.formState.errors.last_name.message}</span>}
+                </div>
+                <div className={`${styles.field} ${styles.fullWidth}`}>
+                  <label>Nombre de usuario</label>
+                  <input placeholder="username" {...editForm.register('username', { required: 'Requerido' })} />
+                  {editForm.formState.errors.username && <span>{editForm.formState.errors.username.message}</span>}
+                </div>
+                <div className={`${styles.field} ${styles.fullWidth}`}>
+                  <label>Correo electrónico</label>
+                  <input type="email" placeholder="correo@ejemplo.com" {...editForm.register('email', {
+                    required: 'Requerido',
+                    pattern: { value: /\S+@\S+\.\S+/, message: 'Correo inválido' }
+                  })} />
+                  {editForm.formState.errors.email && <span>{editForm.formState.errors.email.message}</span>}
+                </div>
+              </div>
+              {apiError && <p className={styles.apiError}>{apiError}</p>}
+              <div className={styles.modalFooter}>
+                <button type="button" className={styles.btnSecondary} onClick={() => setEditUser(null)}>Cancelar</button>
+                <button type="submit" className={styles.btnPrimary} disabled={editForm.formState.isSubmitting}>
+                  {editForm.formState.isSubmitting ? 'Guardando...' : 'Guardar cambios'}
                 </button>
               </div>
             </form>
@@ -227,15 +288,22 @@ export default function GestionUsuarios() {
   )
 }
 
-function IconPlus() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-}
-function IconSearch() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-}
-function IconTrash() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-}
-function IconX() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+function IconPlus()    { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> }
+function IconSearch()  { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> }
+function IconTrash()   { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg> }
+function IconEdit()    { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> }
+function IconX()       { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> }
+function IconChevron() { return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg> }
+function IconUser()    { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> }
+function IconRole()    { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><circle cx="18" cy="8" r="2"/><path d="M21 14c1.5.5 3 1.8 3 4"/></svg> }
+function IconClock()   { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> }
+function IconCalendar(){ return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> }
+function IconUserFill() {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width:'100%',height:'100%'}}>
+      <circle cx="20" cy="20" r="20" fill="#c8c8c8"/>
+      <circle cx="20" cy="18" r="6" fill="#efefef"/>
+      <path d="M7 42c0-8 5.8-12 13-12s13 4 13 12" fill="#efefef"/>
+    </svg>
+  )
 }

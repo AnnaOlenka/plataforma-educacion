@@ -169,6 +169,7 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@edupath.local")
+EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH", "")
 PASSWORD_RESET_FRONTEND_URL = os.getenv(
     "PASSWORD_RESET_FRONTEND_URL",
     "http://localhost:5173/recuperar-cuenta",

@@ -8,3 +8,6 @@ export const register = (data) =>
 
 export const forgotPassword = (email) =>
   api.post('/api/auth/password-reset/', { email })
+
+export const resetPassword = (uid, token, new_password, new_password_confirm) =>
+  api.post('/api/auth/password-reset/confirm/', { uid, token, new_password, new_password_confirm })
