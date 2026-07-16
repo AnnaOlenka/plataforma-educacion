@@ -181,7 +181,7 @@ App: `usuarios` · Extiende `AbstractUser` de Django.
 | id | PK (AutoField) | Automático |
 | username | CharField | Heredado, único |
 | password | CharField | Heredado (hash) |
-| email | EmailField | Heredado |
+| email | EmailField | **Único y obligatorio** (override del modelo) |
 | first_name | CharField | Heredado |
 | last_name | CharField | Heredado |
 | is_staff | BooleanField | Heredado |
