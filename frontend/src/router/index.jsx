@@ -15,6 +15,9 @@ import InstructorCursos from '../features/instructor/components/InstructorCursos
 import CursoEditor from '../features/instructor/components/CursoEditor'
 import InstructorCalificaciones from '../features/instructor/components/InstructorCalificaciones'
 import InstructorAnalitica from '../features/instructor/components/InstructorAnalitica'
+import AdminDashboard from '../features/admin/components/AdminDashboard'
+import AdminCursos from '../features/admin/components/AdminCursos'
+import AdminAuditoria from '../features/admin/components/AdminAuditoria'
 import MiProgreso from '../features/progreso/components/MiProgreso'
 import MisCertificados from '../features/certificados/components/MisCertificados'
 import VerificarCertificado from '../features/certificados/components/VerificarCertificado'
@@ -41,12 +44,12 @@ export default function AppRouter() {
             <MainLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Navigate to="usuarios" replace />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="usuarios" element={<GestionUsuarios />} />
-          <Route path="cursos" element={<CatalogoCursos />} />
-          <Route path="cursos/:slug" element={<CursoDetalle />} />
-          <Route path="cursos/:slug/aprender" element={<CursoAprendizaje />} />
-          <Route path="dashboard" element={<div style={{padding:'2rem'}}>Dashboard admin</div>} />
+          <Route path="cursos" element={<AdminCursos />} />
+          <Route path="auditoria" element={<AdminAuditoria />} />
+          <Route path="analiticas" element={<AdminDashboard />} />
         </Route>
 
         {/* Instructor */}

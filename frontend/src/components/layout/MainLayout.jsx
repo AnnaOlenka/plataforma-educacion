@@ -7,10 +7,7 @@ const NAV = {
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard', icon: <IconGrid /> },
     { to: '/admin/usuarios', label: 'Gestión de Usuarios', icon: <IconUsers /> },
-    { to: '/admin/cursos', label: 'Cursos', icon: <IconBook /> },
-    { to: '/admin/evaluaciones', label: 'Evaluaciones', icon: <IconClipboard /> },
-    { to: '/admin/certificados', label: 'Certificados', icon: <IconAward /> },
-    { to: '/admin/analiticas', label: 'Analíticas', icon: <IconChart /> },
+    { to: '/admin/cursos', label: 'Aprobación Cursos', icon: <IconBook /> },
     { to: '/admin/auditoria', label: 'Auditoría', icon: <IconShield /> },
   ],
   instructor: [
