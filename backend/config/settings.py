@@ -178,6 +178,15 @@ PASSWORD_RESET_TIMEOUT = int(os.getenv("PASSWORD_RESET_TIMEOUT", "3600"))  # 1 h
 
 # Certificados: clave para firma HMAC (en prod usar KMS / secreto montado)
 CERT_SIGNING_SECRET = os.getenv("CERT_SIGNING_SECRET", SECRET_KEY)
+# URL pública de verificación (QR apunta aquí; puede ser frontend o API)
+CERT_PUBLIC_VERIFY_URL = os.getenv(
+    "CERT_PUBLIC_VERIFY_URL",
+    "http://127.0.0.1:8000/api/certificados/verificar/{codigo}/",
+)
+CERT_FRONTEND_VERIFY_URL = os.getenv(
+    "CERT_FRONTEND_VERIFY_URL",
+    "http://localhost:5173/verificar/{codigo}",
+)
 
 # Legacy bridge
 LEGACY_SYNC_API_KEY = os.getenv("LEGACY_SYNC_API_KEY", "legacy-dev-key")
