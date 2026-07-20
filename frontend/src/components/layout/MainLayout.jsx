@@ -16,7 +16,6 @@ const NAV = {
   instructor: [
     { to: '/instructor/dashboard', label: 'Dashboard', icon: <IconGrid /> },
     { to: '/instructor/cursos', label: 'Mis Cursos', icon: <IconBook /> },
-    { to: '/instructor/quizzes', label: 'Quizzes', icon: <IconClipboard /> },
     { to: '/instructor/calificaciones', label: 'Calificaciones', icon: <IconStar /> },
     { to: '/instructor/analiticas', label: 'Analíticas', icon: <IconChart /> },
   ],

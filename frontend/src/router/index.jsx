@@ -10,6 +10,14 @@ import CursoDetalle from '../features/cursos/components/CursoDetalle'
 import CursoAprendizaje from '../features/cursos/components/CursoAprendizaje'
 import EvaluacionesIndex from '../features/evaluaciones/components/EvaluacionesIndex'
 import EvaluacionRunner from '../features/evaluaciones/components/EvaluacionRunner'
+import InstructorDashboard from '../features/instructor/components/InstructorDashboard'
+import InstructorCursos from '../features/instructor/components/InstructorCursos'
+import CursoEditor from '../features/instructor/components/CursoEditor'
+import InstructorCalificaciones from '../features/instructor/components/InstructorCalificaciones'
+import InstructorAnalitica from '../features/instructor/components/InstructorAnalitica'
+import MiProgreso from '../features/progreso/components/MiProgreso'
+import MisCertificados from '../features/certificados/components/MisCertificados'
+import VerificarCertificado from '../features/certificados/components/VerificarCertificado'
 import useAuthStore from '../store/authStore'
 
 function ProtectedRoute({ children, roles }) {
@@ -48,10 +56,12 @@ export default function AppRouter() {
           </ProtectedRoute>
         }>
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<div style={{padding:'2rem'}}>Dashboard instructor</div>} />
-          <Route path="cursos" element={<CatalogoCursos />} />
-          <Route path="cursos/:slug" element={<CursoDetalle />} />
-          <Route path="cursos/:slug/aprender" element={<CursoAprendizaje />} />
+          <Route path="dashboard" element={<InstructorDashboard />} />
+          <Route path="cursos" element={<InstructorCursos />} />
+          <Route path="cursos/:slug/editar" element={<CursoEditor />} />
+          <Route path="cursos/:slug/analitica" element={<InstructorAnalitica />} />
+          <Route path="calificaciones" element={<InstructorCalificaciones />} />
+          <Route path="analiticas" element={<InstructorAnalitica />} />
         </Route>
 
         {/* Estudiante (y navegación de cursos compartida) */}
@@ -65,6 +75,29 @@ export default function AppRouter() {
           <Route path=":slug" element={<CursoDetalle />} />
           <Route path=":slug/aprender" element={<CursoAprendizaje />} />
         </Route>
+
+        {/* Progreso */}
+        <Route path="/progreso" element={
+          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<MiProgreso />} />
+        </Route>
+
+        {/* Certificados autenticados */}
+        <Route path="/certificados" element={
+          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<MisCertificados />} />
+          <Route path="verificar/:codigo" element={<VerificarCertificado />} />
+        </Route>
+
+        {/* Verificación pública (sin auth) */}
+        <Route path="/verificar/:codigo" element={<VerificarCertificado />} />
+        <Route path="/verificar" element={<VerificarCertificado />} />
 
         {/* Evaluaciones (estudiante, instructor, admin) */}
         <Route path="/evaluaciones" element={
