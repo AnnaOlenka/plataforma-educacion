@@ -14,6 +14,8 @@ class LeccionSerializer(serializers.ModelSerializer):
             "orden",
             "tipo",
             "contenido",
+            "recurso_url",
+            "archivo",
             "duracion_minutos",
             "es_obligatoria",
             "modulo",

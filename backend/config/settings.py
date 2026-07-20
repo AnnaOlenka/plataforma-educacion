@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.certificados",
     "apps.progreso",
     "apps.analytics",
+    "apps.instructor",
 ]
 
 MIDDLEWARE = [

@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from apps.cursos.models import Leccion
 from apps.cursos.permissions import IsInstructorOrReadOnly, usuario_inscrito
 
-from .models import Evaluacion, IntentoEvaluacion
+from .models import Evaluacion, IntentoEvaluacion, Pregunta
 from .serializers import (
     EnviarIntentoSerializer,
     EvaluacionInstructorSerializer,
@@ -160,6 +160,14 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
         intento_id = request.data.get("intento_id")
 
         resultado = calificar_intento(evaluacion, respuestas, canvas_payload)
+        requiere_revision = evaluacion.preguntas.filter(
+            tipo=Pregunta.Tipo.CANVAS_DIBUJO
+        ).exists()
+        estado_final = (
+            IntentoEvaluacion.Estado.PENDIENTE_REVISION
+            if requiere_revision
+            else IntentoEvaluacion.Estado.FINALIZADO
+        )
 
         if intento_id:
             try:
@@ -178,8 +186,9 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
             intento.canvas_payload = canvas_payload
             intento.detalle_calificacion = resultado["detalle_calificacion"]
             intento.puntaje = resultado["puntaje"]
+            intento.puntaje_automatico = resultado["puntaje"]
             intento.aprobado = resultado["aprobado"]
-            intento.estado = IntentoEvaluacion.Estado.FINALIZADO
+            intento.estado = estado_final
             intento.finalizado_en = timezone.now()
             intento.save()
         else:
@@ -190,14 +199,16 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
                 canvas_payload=canvas_payload,
                 detalle_calificacion=resultado["detalle_calificacion"],
                 puntaje=resultado["puntaje"],
+                puntaje_automatico=resultado["puntaje"],
                 aprobado=resultado["aprobado"],
-                estado=IntentoEvaluacion.Estado.FINALIZADO,
+                estado=estado_final,
                 finalizado_en=timezone.now(),
             )
 
         data = IntentoSerializer(intento).data
         data["puntos_obtenidos"] = resultado["puntos_obtenidos"]
         data["puntos_totales"] = resultado["puntos_totales"]
+        data["requiere_revision"] = requiere_revision
         return Response(data, status=status.HTTP_201_CREATED)
 
     @action(

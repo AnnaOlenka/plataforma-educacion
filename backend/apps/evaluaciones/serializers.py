@@ -112,8 +112,11 @@ class IntentoSerializer(serializers.ModelSerializer):
             "canvas_payload",
             "detalle_calificacion",
             "puntaje",
+            "puntaje_automatico",
             "aprobado",
             "estado",
+            "feedback_instructor",
+            "calificado_en",
             "iniciado_en",
             "finalizado_en",
         )

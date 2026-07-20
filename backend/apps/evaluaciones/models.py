@@ -60,6 +60,8 @@ class IntentoEvaluacion(models.Model):
     class Estado(models.TextChoices):
         EN_CURSO = "en_curso", "En curso"
         FINALIZADO = "finalizado", "Finalizado"
+        PENDIENTE_REVISION = "pendiente_revision", "Pendiente de revisión"
+        REVISADO = "revisado", "Revisado manualmente"
 
     evaluacion = models.ForeignKey(
         Evaluacion, on_delete=models.CASCADE, related_name="intentos"
@@ -74,10 +76,22 @@ class IntentoEvaluacion(models.Model):
     # Detalle por pregunta: [{pregunta_id, correcta, puntaje_obtenido, feedback}]
     detalle_calificacion = models.JSONField(default=list, blank=True)
     puntaje = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    puntaje_automatico = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0, help_text="Puntaje del auto-grader"
+    )
     aprobado = models.BooleanField(default=False)
     estado = models.CharField(
         max_length=20, choices=Estado.choices, default=Estado.FINALIZADO
     )
+    feedback_instructor = models.TextField(blank=True)
+    calificado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="intentos_calificados",
+    )
+    calificado_en = models.DateTimeField(null=True, blank=True)
     iniciado_en = models.DateTimeField(auto_now_add=True)
     finalizado_en = models.DateTimeField(null=True, blank=True)
 

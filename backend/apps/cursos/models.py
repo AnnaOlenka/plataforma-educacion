@@ -76,6 +76,10 @@ class Leccion(models.Model):
     orden = models.PositiveIntegerField(default=0)
     tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.CONTENIDO)
     contenido = models.TextField(blank=True)
+    recurso_url = models.URLField(blank=True, help_text="URL de video o recurso externo")
+    archivo = models.FileField(
+        upload_to="lecciones/", blank=True, null=True, help_text="PDF, imagen u otro adjunto"
+    )
     duracion_minutos = models.PositiveIntegerField(default=10)
     es_obligatoria = models.BooleanField(default=True)
 
