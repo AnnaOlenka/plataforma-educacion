@@ -8,11 +8,13 @@ from apps.cursos.models import Leccion
 
 
 class Evaluacion(models.Model):
-    leccion = models.OneToOneField(Leccion, on_delete=models.CASCADE, related_name="evaluacion")
+    leccion = models.OneToOneField(
+        Leccion, on_delete=models.CASCADE, related_name="evaluacion"
+    )
     titulo = models.CharField(max_length=200)
     tiempo_limite_seg = models.PositiveIntegerField(default=600)
     puntaje_aprobacion = models.PositiveIntegerField(default=70)
-    # Payload Canvas: shapes, hotspots, opciones — consumido por el SPA
+    # Lienzo global: tamaño, fondo, hotspots compartidos, zonas de drop
     canvas_schema = models.JSONField(default=dict, blank=True)
     activo = models.BooleanField(default=True)
 
@@ -28,16 +30,21 @@ class Pregunta(models.Model):
     class Tipo(models.TextChoices):
         OPCION_MULTIPLE = "opcion_multiple", "Opción múltiple"
         VERDADERO_FALSO = "verdadero_falso", "Verdadero/Falso"
-        CANVAS_HOTSPOT = "canvas_hotspot", "Hotspot Canvas"
-        CANVAS_DIBUJO = "canvas_dibujo", "Dibujo Canvas"
+        CANVAS_HOTSPOT = "canvas_hotspot", "Seleccionar (hotspot)"
+        CANVAS_ARRASTRAR = "canvas_arrastrar", "Arrastrar y soltar"
+        CANVAS_DIBUJO = "canvas_dibujo", "Dibujo / región Canvas"
 
-    evaluacion = models.ForeignKey(Evaluacion, on_delete=models.CASCADE, related_name="preguntas")
+    evaluacion = models.ForeignKey(
+        Evaluacion, on_delete=models.CASCADE, related_name="preguntas"
+    )
     enunciado = models.TextField()
     tipo = models.CharField(max_length=30, choices=Tipo.choices)
     orden = models.PositiveIntegerField(default=0)
     puntaje = models.PositiveIntegerField(default=1)
     opciones = models.JSONField(default=list, blank=True)
+    # Nunca se expone al estudiante en serializers públicos
     respuesta_correcta = models.JSONField(default=dict)
+    # Config del Canvas: items, targets, hotspots, tolerancia, feedback
     canvas_config = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -50,7 +57,13 @@ class Pregunta(models.Model):
 
 
 class IntentoEvaluacion(models.Model):
-    evaluacion = models.ForeignKey(Evaluacion, on_delete=models.CASCADE, related_name="intentos")
+    class Estado(models.TextChoices):
+        EN_CURSO = "en_curso", "En curso"
+        FINALIZADO = "finalizado", "Finalizado"
+
+    evaluacion = models.ForeignKey(
+        Evaluacion, on_delete=models.CASCADE, related_name="intentos"
+    )
     estudiante = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -58,8 +71,13 @@ class IntentoEvaluacion(models.Model):
     )
     respuestas = models.JSONField(default=dict)
     canvas_payload = models.JSONField(default=dict, blank=True)
+    # Detalle por pregunta: [{pregunta_id, correcta, puntaje_obtenido, feedback}]
+    detalle_calificacion = models.JSONField(default=list, blank=True)
     puntaje = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     aprobado = models.BooleanField(default=False)
+    estado = models.CharField(
+        max_length=20, choices=Estado.choices, default=Estado.FINALIZADO
+    )
     iniciado_en = models.DateTimeField(auto_now_add=True)
     finalizado_en = models.DateTimeField(null=True, blank=True)
 
