@@ -1,4 +1,4 @@
-.page { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+.page { padding: 2rem 2.5rem; min-height: 100%; }
 
 .pageHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
 .pageTitle { font-size: 1.45rem; font-weight: 700; color: #111827; margin: 0 0 0.25rem; }
