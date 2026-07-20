@@ -38,6 +38,26 @@ class Command(BaseCommand):
             estudiante.set_password("estudiante123")
             estudiante.save()
 
+        admin_user, created = Usuario.objects.get_or_create(
+            username="admin",
+            defaults={
+                "email": "admin@edupath.local",
+                "rol": Usuario.Rol.ADMIN,
+                "first_name": "Ada",
+                "last_name": "Admin",
+                "is_staff": True,
+                "is_superuser": True,
+            },
+        )
+        if created:
+            admin_user.set_password("admin123")
+            admin_user.save()
+        elif admin_user.rol != Usuario.Rol.ADMIN:
+            admin_user.rol = Usuario.Rol.ADMIN
+            admin_user.is_staff = True
+            admin_user.is_superuser = True
+            admin_user.save(update_fields=["rol", "is_staff", "is_superuser"])
+
         curso, _ = Curso.objects.get_or_create(
             slug="introduccion-web",
             defaults={
@@ -177,6 +197,7 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS("Demo lista."))
+        self.stdout.write("  admin / admin123")
         self.stdout.write("  instructor / instructor123")
         self.stdout.write("  estudiante / estudiante123")
         self.stdout.write(f"  curso: {curso.slug} · lecciones: {lec1.id}, quiz: {lec_quiz.id}")

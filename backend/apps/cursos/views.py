@@ -83,7 +83,34 @@ class CursoViewSet(viewsets.ModelViewSet):
         return ctx
 
     def perform_create(self, serializer):
-        serializer.save(instructor=self.request.user)
+        # Instructores no publican directo: siempre borrador → solicitar aprobación
+        serializer.save(
+            instructor=self.request.user,
+            estado=Curso.Estado.BORRADOR,
+        )
+
+    def perform_update(self, serializer):
+        curso = self.get_object()
+        user = self.request.user
+        from .permissions import es_dueno_curso
+
+        if not es_dueno_curso(user, curso):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("Solo el instructor dueño o un admin pueden editar.")
+        # Impedir auto-publicación vía PATCH del catálogo
+        if "estado" in serializer.validated_data and not getattr(user, "es_admin", False):
+            serializer.validated_data.pop("estado")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        from .permissions import es_dueno_curso
+        from rest_framework.exceptions import PermissionDenied
+
+        if not es_dueno_curso(user, instance):
+            raise PermissionDenied("Solo el instructor dueño o un admin pueden eliminar.")
+        instance.delete()
 
     @action(
         detail=True,

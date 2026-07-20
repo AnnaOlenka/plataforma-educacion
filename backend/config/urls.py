@@ -23,6 +23,7 @@ urlpatterns = [
     path("readyz/", healthz, name="readyz"),
     path("", include("django_prometheus.urls")),
     path("api/auth/", include("apps.usuarios.urls")),
+    path("api/admin/", include("apps.administracion.urls")),
     path("api/instructor/", include("apps.instructor.urls")),
     path("api/", include("apps.cursos.urls")),
     path("api/", include("apps.evaluaciones.urls")),

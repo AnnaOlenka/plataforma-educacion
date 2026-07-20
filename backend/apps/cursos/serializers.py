@@ -83,9 +83,9 @@ class CursoListSerializer(serializers.ModelSerializer):
     instructor_nombre = serializers.CharField(
         source="instructor.get_full_name", read_only=True
     )
-    inscritos_count = serializers.IntegerField(read_only=True)
-    lecciones_count = serializers.IntegerField(read_only=True)
-    modulos_count = serializers.IntegerField(read_only=True)
+    inscritos_count = serializers.IntegerField(read_only=True, required=False)
+    lecciones_count = serializers.IntegerField(read_only=True, required=False)
+    modulos_count = serializers.IntegerField(read_only=True, required=False)
     inscrito = serializers.SerializerMethodField()
 
     class Meta:
@@ -105,6 +105,16 @@ class CursoListSerializer(serializers.ModelSerializer):
             "modulos_count",
             "inscrito",
             "creado_en",
+        )
+        read_only_fields = (
+            "id",
+            "instructor",
+            "estado",
+            "creado_en",
+            "inscritos_count",
+            "lecciones_count",
+            "modulos_count",
+            "inscrito",
         )
 
     def get_inscrito(self, obj):

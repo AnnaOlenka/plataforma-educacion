@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.progreso",
     "apps.analytics",
     "apps.instructor",
+    "apps.administracion",
 ]
 
 MIDDLEWARE = [
