@@ -74,12 +74,21 @@ class VerificacionPublicaSerializer(serializers.Serializer):
     codigo = serializers.UUIDField()
     estudiante = serializers.CharField()
     curso = serializers.CharField()
-    curso_slug = serializers.CharField()
-    emitido_en = serializers.DateTimeField()
+    curso_slug = serializers.CharField(required=False)
+    emitido_en = serializers.DateTimeField(required=False)
     hash_hmac = serializers.CharField()
     hash_corto = serializers.CharField()
     firma_integra = serializers.BooleanField()
     revocado = serializers.BooleanField()
+    algoritmo = serializers.CharField(required=False)
     url_verificacion = serializers.CharField()
+    url_verificacion_api = serializers.CharField(required=False)
     url_qr = serializers.CharField(required=False)
     mensaje = serializers.CharField()
+
+
+class VerificarPorHashRequestSerializer(serializers.Serializer):
+    codigo = serializers.UUIDField(required=False)
+    hash_hmac = serializers.CharField(required=False, allow_blank=True)
+    firma_hmac = serializers.CharField(required=False, allow_blank=True)
+    hash_corto = serializers.CharField(required=False, allow_blank=True)

@@ -2,9 +2,10 @@
 Panel admin: aprobación de cursos, gestión de usuarios, auditoría.
 """
 from django.contrib.auth import get_user_model
-from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -24,6 +25,7 @@ from .serializers import (
 Usuario = get_user_model()
 
 
+@extend_schema(responses={200: OpenApiTypes.OBJECT})
 class AdminPanelResumenView(APIView):
     """GET /api/admin/panel/"""
 

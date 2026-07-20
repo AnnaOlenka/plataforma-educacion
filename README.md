@@ -47,6 +47,12 @@ python manage.py runserver
 
 El API queda en `http://127.0.0.1:8000/`.
 
+Documentación OpenAPI:
+
+- Swagger UI: `http://127.0.0.1:8000/api/docs/`
+- ReDoc: `http://127.0.0.1:8000/api/redoc/`
+- Schema JSON: `http://127.0.0.1:8000/api/schema/`
+
 ### Usuarios demo (`seed_demo`)
 
 - Admin: `admin` / `admin123`

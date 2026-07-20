@@ -4,6 +4,8 @@ Panel instructor: contenido, quizzes, calificación manual y analíticas.
 from django.db import transaction
 from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -36,6 +38,8 @@ class InstructorCursoViewSet(
     lookup_field = "slug"
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Curso.objects.none()
         user = self.request.user
         qs = Curso.objects.all()
         if not getattr(user, "es_admin", False):
@@ -97,6 +101,8 @@ class InstructorModuloViewSet(viewsets.ModelViewSet):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Modulo.objects.none()
         user = self.request.user
         qs = Modulo.objects.select_related("curso")
         if getattr(user, "es_admin", False):
@@ -111,6 +117,8 @@ class InstructorLeccionViewSet(viewsets.ModelViewSet):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Leccion.objects.none()
         user = self.request.user
         qs = Leccion.objects.select_related("modulo", "modulo__curso")
         if getattr(user, "es_admin", False):
@@ -139,6 +147,8 @@ class InstructorEvaluacionViewSet(viewsets.ModelViewSet):
     filterset_fields = ("leccion", "activo", "leccion__modulo__curso")
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Evaluacion.objects.none()
         user = self.request.user
         qs = Evaluacion.objects.prefetch_related("preguntas").select_related(
             "leccion", "leccion__modulo", "leccion__modulo__curso"
@@ -154,6 +164,8 @@ class InstructorPreguntaViewSet(viewsets.ModelViewSet):
     filterset_fields = ("evaluacion", "tipo")
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Pregunta.objects.none()
         user = self.request.user
         qs = Pregunta.objects.select_related(
             "evaluacion", "evaluacion__leccion__modulo__curso"
@@ -171,6 +183,8 @@ class InstructorIntentoViewSet(
     filterset_fields = ("estado", "evaluacion", "aprobado")
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return IntentoEvaluacion.objects.none()
         user = self.request.user
         qs = IntentoEvaluacion.objects.select_related(
             "estudiante",
@@ -248,6 +262,7 @@ class InstructorIntentoViewSet(
         return Response(InstructorIntentoSerializer(intento).data)
 
 
+@extend_schema(responses={200: OpenApiTypes.OBJECT})
 class InstructorAnalyticsCursoView(APIView):
     permission_classes = [EsInstructor]
 
@@ -355,6 +370,7 @@ class InstructorAnalyticsCursoView(APIView):
         )
 
 
+@extend_schema(responses={200: OpenApiTypes.OBJECT})
 class InstructorPanelResumenView(APIView):
     permission_classes = [EsInstructor]
 

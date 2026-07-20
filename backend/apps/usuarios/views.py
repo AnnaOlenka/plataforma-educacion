@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -68,6 +70,7 @@ class RegistroAdminView(generics.CreateAPIView):
         )
 
 
+@extend_schema(request=LoginSerializer, responses={200: LoginSerializer})
 class LoginView(APIView):
     """POST /api/auth/login/ — JWT access + refresh + perfil."""
 
@@ -80,6 +83,7 @@ class LoginView(APIView):
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
+@extend_schema(request=LogoutSerializer, responses={200: OpenApiTypes.OBJECT})
 class LogoutView(APIView):
     """POST /api/auth/logout/ — revoca refresh token (blacklist)."""
 
@@ -98,6 +102,7 @@ class RefreshView(TokenRefreshView):
     throttle_classes = [AuthAnonThrottle]
 
 
+@extend_schema(responses=UsuarioSerializer)
 class MeView(APIView):
     """GET/PATCH /api/auth/me/ — perfil del usuario autenticado."""
 
@@ -106,6 +111,7 @@ class MeView(APIView):
     def get(self, request):
         return Response(UsuarioSerializer(request.user).data)
 
+    @extend_schema(request=UsuarioSerializer, responses=UsuarioSerializer)
     def patch(self, request):
         serializer = UsuarioSerializer(
             request.user, data=request.data, partial=True
@@ -115,6 +121,7 @@ class MeView(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(request=ChangePasswordSerializer, responses={200: OpenApiTypes.OBJECT})
 class ChangePasswordView(APIView):
     """POST /api/auth/change-password/"""
 
@@ -133,6 +140,7 @@ class ChangePasswordView(APIView):
         )
 
 
+@extend_schema(request=PasswordResetRequestSerializer, responses={200: OpenApiTypes.OBJECT})
 class PasswordResetRequestView(APIView):
     """POST /api/auth/password-reset/ — solicita recuperación (anti-enumeración)."""
 
@@ -149,6 +157,7 @@ class PasswordResetRequestView(APIView):
         return Response({"detail": MENSAJE_RESET}, status=status.HTTP_200_OK)
 
 
+@extend_schema(request=PasswordResetConfirmSerializer, responses={200: OpenApiTypes.OBJECT})
 class PasswordResetConfirmView(APIView):
     """POST /api/auth/password-reset/confirm/ — confirma nueva contraseña."""
 

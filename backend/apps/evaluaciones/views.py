@@ -1,4 +1,5 @@
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -36,6 +37,8 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsInstructorOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Evaluacion.objects.none()
         qs = Evaluacion.objects.prefetch_related("preguntas")
         user = self.request.user
         if self.action in ("list", "retrieve", "validar", "enviar", "iniciar", "intentos"):
@@ -225,6 +228,7 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
         return Response(IntentoSerializer(qs, many=True).data)
 
 
+@extend_schema(responses=EvaluacionSerializer)
 class EvaluacionByLeccionView(APIView):
     """Named route usada por HATEOAS en ruta-aprendizaje."""
 

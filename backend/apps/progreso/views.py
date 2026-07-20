@@ -19,6 +19,8 @@ class ProgresoViewSet(
     filterset_fields = ("estado", "leccion")
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return ProgresoLeccion.objects.none()
         qs = ProgresoLeccion.objects.filter(
             estudiante=self.request.user
         ).select_related("leccion", "leccion__modulo", "leccion__modulo__curso")

@@ -2,6 +2,8 @@
 Dashboard de progreso: métricas y exportación PDF.
 """
 from django.http import HttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +15,7 @@ from .pdf import build_dashboard_pdf
 from .services import metricas_estudiante, metricas_instructor
 
 
+@extend_schema(responses={200: OpenApiTypes.OBJECT})
 class EstudianteDashboardView(APIView):
     """
     GET /api/analytics/dashboard/
@@ -26,6 +29,7 @@ class EstudianteDashboardView(APIView):
         return Response(data)
 
 
+@extend_schema(responses={200: OpenApiTypes.OBJECT})
 class EstudianteCursoDashboardView(APIView):
     """GET /api/analytics/dashboard/curso/{slug}/"""
 
@@ -45,6 +49,7 @@ class EstudianteCursoDashboardView(APIView):
         return Response(data)
 
 
+@extend_schema(responses={(200, "application/pdf"): OpenApiTypes.BINARY})
 class DashboardExportPDFView(APIView):
     """
     GET /api/analytics/dashboard/exportar.pdf
@@ -81,6 +86,7 @@ class DashboardExportPDFView(APIView):
         return response
 
 
+@extend_schema(responses={200: OpenApiTypes.OBJECT})
 class InstructorAnalyticsView(APIView):
     """GET /api/analytics/instructor/ — métricas agregadas por curso."""
 
@@ -93,6 +99,7 @@ class InstructorAnalyticsView(APIView):
         return Response(metricas_instructor(user))
 
 
+@extend_schema(responses={(200, "application/pdf"): OpenApiTypes.BINARY})
 class InstructorExportPDFView(APIView):
     """GET /api/analytics/instructor/exportar.pdf"""
 
@@ -104,7 +111,6 @@ class InstructorExportPDFView(APIView):
             return Response({"detail": "Solo instructores"}, status=403)
 
         data = metricas_instructor(user)
-        # Reutilizar plantilla PDF adaptando estructura de estudiante
         metricas = {
             "estudiante": {
                 "id": user.id,

@@ -36,6 +36,8 @@ class CursoViewSet(viewsets.ModelViewSet):
     ordering_fields = ("creado_en", "titulo", "nivel")
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Curso.objects.none()
         qs = (
             Curso.objects.select_related("instructor")
             .annotate(
@@ -525,6 +527,8 @@ class InscripcionViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ("estado", "curso")
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Inscripcion.objects.none()
         user = self.request.user
         qs = Inscripcion.objects.select_related("curso", "estudiante")
         if getattr(user, "es_admin", False):

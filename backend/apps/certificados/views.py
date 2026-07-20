@@ -1,4 +1,6 @@
 from django.http import HttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,7 +15,11 @@ from .qr import (
     url_verificacion_api,
     url_verificacion_frontend,
 )
-from .serializers import CertificadoSerializer
+from .serializers import (
+    CertificadoSerializer,
+    VerificacionPublicaSerializer,
+    VerificarPorHashRequestSerializer,
+)
 from .services import EmisionError, emitir_certificado
 
 
@@ -28,6 +34,8 @@ class CertificadoViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Certificado.objects.none()
         user = self.request.user
         qs = Certificado.objects.select_related("curso", "estudiante")
         if getattr(user, "es_admin", False):
@@ -39,6 +47,17 @@ class CertificadoViewSet(viewsets.ReadOnlyModelViewSet):
         ctx["request"] = self.request
         return ctx
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "curso_ref",
+                OpenApiTypes.STR,
+                OpenApiParameter.PATH,
+                description="ID numérico o slug del curso",
+            )
+        ],
+        responses={200: CertificadoSerializer, 201: CertificadoSerializer},
+    )
     @action(detail=False, methods=["post"], url_path="emitir/(?P<curso_ref>[^/.]+)")
     def emitir(self, request, curso_ref=None):
         """
@@ -57,6 +76,7 @@ class CertificadoViewSet(viewsets.ReadOnlyModelViewSet):
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
+    @extend_schema(responses={(200, "application/pdf"): OpenApiTypes.BINARY})
     @action(detail=True, methods=["get"], url_path="pdf")
     def pdf(self, request, codigo=None):
         """PDF del certificado con hash y QR (dueño o admin)."""
@@ -68,6 +88,7 @@ class CertificadoViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return response
 
+    @extend_schema(responses={(200, "image/png"): OpenApiTypes.BINARY})
     @action(detail=True, methods=["get"], url_path="qr")
     def qr(self, request, codigo=None):
         """PNG del QR de verificación (dueño o admin)."""
@@ -76,6 +97,7 @@ class CertificadoViewSet(viewsets.ReadOnlyModelViewSet):
         return HttpResponse(png, content_type="image/png")
 
 
+@extend_schema(responses={200: VerificacionPublicaSerializer, 404: VerificacionPublicaSerializer})
 class VerificarCertificadoView(APIView):
     """
     Verificación pública criptográfica — sin login.
@@ -133,6 +155,7 @@ class VerificarCertificadoView(APIView):
         )
 
 
+@extend_schema(responses={(200, "image/png"): OpenApiTypes.BINARY})
 class VerificarCertificadoQRView(APIView):
     """PNG del QR público — sin login."""
 
@@ -148,6 +171,10 @@ class VerificarCertificadoQRView(APIView):
         return response
 
 
+@extend_schema(
+    request=VerificarPorHashRequestSerializer,
+    responses={200: VerificacionPublicaSerializer, 404: VerificacionPublicaSerializer},
+)
 class VerificarPorHashView(APIView):
     """
     POST público: verificar por codigo y/o hash_hmac.
