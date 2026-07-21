@@ -1,0 +1,50 @@
+.page { padding: 2rem 2.5rem; min-height: 100%; }
+
+.pageHeader { padding-bottom: 1.25rem; border-bottom: 1px solid #f3f4f6; margin-bottom: 1.5rem; }
+.pageTitle { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 0.2rem; }
+.pageDesc { font-size: 0.83rem; color: #6b7280; margin: 0; }
+
+/* Hero */
+.heroCard { display: flex; align-items: center; gap: 1.25rem; background: linear-gradient(135deg,#6366f1,#8b5cf6); border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.75rem; color: #fff; }
+.heroAvatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; flex-shrink: 0; }
+.heroName { font-size: 1.2rem; font-weight: 700; line-height: 1.3; }
+.heroMeta { font-size: 0.84rem; opacity: .85; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.rolBadge { background: rgba(255,255,255,.2); border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 600; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0.25rem; background: #f3f4f6; border-radius: 10px; padding: 0.25rem; margin-bottom: 1.5rem; width: fit-content; }
+.tab { padding: 0.4rem 1.1rem; border-radius: 8px; font-size: 0.84rem; font-weight: 500; color: #6b7280; border: none; background: none; cursor: pointer; transition: all .15s; }
+.tabActive { background: #fff; color: #111827; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+/* Form card */
+.formCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.75rem; max-width: 560px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 540px) { .grid2 { grid-template-columns: 1fr; } }
+
+.field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 1rem; }
+.label { font-size: 0.82rem; font-weight: 600; color: #374151; }
+.input { padding: 0.6rem 0.85rem; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; color: #111827; outline: none; transition: border-color .15s; }
+.input:focus { border-color: #6366f1; }
+.inputDisabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
+.errorMsg { font-size: 0.77rem; color: #ef4444; }
+.hint { font-size: 0.77rem; color: #9ca3af; }
+
+.formFooter { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
+
+.apiError { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.84rem; color: #dc2626; margin-bottom: 1rem; }
+
+.btnPrimary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.4rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btnPrimary:hover:not(:disabled) { background: #4f46e5; }
+.btnPrimary:disabled { opacity: .5; cursor: not-allowed; }
+
+/* State */
+.stateWrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; }
+.spinner { width: 26px; height: 26px; border: 3px solid #e5e7eb; border-top-color: #6366f1; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.2rem; border-radius: 10px; font-size: 0.875rem; font-weight: 500; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.15); z-index: 9999; animation: fadeIn .2s ease; }
+.toastOk { background: #16a34a; }
+.toastErr { background: #dc2626; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }

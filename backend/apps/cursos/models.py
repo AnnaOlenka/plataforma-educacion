@@ -9,7 +9,9 @@ from django.utils.text import slugify
 class Curso(models.Model):
     class Estado(models.TextChoices):
         BORRADOR = "borrador", "Borrador"
+        PENDIENTE_APROBACION = "pendiente_aprobacion", "Pendiente de aprobación"
         PUBLICADO = "publicado", "Publicado"
+        RECHAZADO = "rechazado", "Rechazado"
         ARCHIVADO = "archivado", "Archivado"
 
     titulo = models.CharField(max_length=200)
@@ -21,8 +23,18 @@ class Curso(models.Model):
         related_name="cursos_impartidos",
     )
     portada = models.ImageField(upload_to="cursos/", blank=True, null=True)
-    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.BORRADOR)
+    estado = models.CharField(max_length=30, choices=Estado.choices, default=Estado.BORRADOR)
     nivel = models.CharField(max_length=50, default="intermedio")
+    solicitado_en = models.DateTimeField(null=True, blank=True)
+    revisado_en = models.DateTimeField(null=True, blank=True)
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cursos_revisados",
+    )
+    motivo_rechazo = models.TextField(blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -76,6 +88,10 @@ class Leccion(models.Model):
     orden = models.PositiveIntegerField(default=0)
     tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.CONTENIDO)
     contenido = models.TextField(blank=True)
+    recurso_url = models.URLField(blank=True, help_text="URL de video o recurso externo")
+    archivo = models.FileField(
+        upload_to="lecciones/", blank=True, null=True, help_text="PDF, imagen u otro adjunto"
+    )
     duracion_minutos = models.PositiveIntegerField(default=10)
     es_obligatoria = models.BooleanField(default=True)
 

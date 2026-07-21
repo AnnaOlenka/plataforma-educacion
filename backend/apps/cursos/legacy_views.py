@@ -3,6 +3,8 @@ Endpoint de sincronización para legacy-enrollment.jsp (CSV masivo).
 """
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -13,6 +15,7 @@ from .models import Curso, Inscripcion
 Usuario = get_user_model()
 
 
+@extend_schema(request=OpenApiTypes.OBJECT, responses={200: OpenApiTypes.OBJECT})
 class LegacyEnrollmentSyncView(APIView):
     """
     Recibe lotes de inscripción desde el puente JSP.
@@ -28,12 +31,14 @@ class LegacyEnrollmentSyncView(APIView):
         if api_key != settings.LEGACY_SYNC_API_KEY:
             return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        rows = request.data.get("enrollments", [])
-        created, skipped, errors = 0, 0, []
+        enrollments = request.data.get("enrollments", [])
+        created = 0
+        skipped = 0
+        errors = []
 
-        for i, row in enumerate(rows):
+        for i, row in enumerate(enrollments):
             email = (row.get("email") or "").strip().lower()
-            username = (row.get("username") or email.split("@")[0]).strip()
+            username = (row.get("username") or email.split("@")[0] or f"user{i}").strip()
             curso_slug = row.get("curso_slug")
             if not email or not curso_slug:
                 errors.append({"index": i, "error": "email y curso_slug requeridos"})

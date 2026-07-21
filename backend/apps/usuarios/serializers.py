@@ -12,6 +12,8 @@ ROLES_PUBLICOS = (Usuario.Rol.ESTUDIANTE, Usuario.Rol.INSTRUCTOR)
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
+    """Perfil público /me — no permite cambiar rol ni is_active."""
+
     class Meta:
         model = Usuario
         fields = (
@@ -26,7 +28,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "bio",
             "fecha_registro",
         )
-        read_only_fields = ("id", "rol", "fecha_registro")
+        read_only_fields = ("id", "rol", "is_active", "fecha_registro")
 
 
 class RegistroSerializer(serializers.ModelSerializer):

@@ -170,9 +170,6 @@ export default function GestionUsuarios() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={styles.checkCol}>
-                <input type="checkbox" className={styles.checkbox} checked={allChecked} onChange={toggleAll} />
-              </th>
               <th><span className={styles.thLabel}><IconUser /> Usuario <IconChevron /></span></th>
               <th><span className={styles.thLabel}><IconRole /> Rol <IconChevron /></span></th>
               <th><span className={styles.thLabel}><IconClock /> Estado <IconChevron /></span></th>
@@ -182,15 +179,12 @@ export default function GestionUsuarios() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className={styles.empty}>Cargando...</td></tr>
+              <tr><td colSpan={5} className={styles.empty}>Cargando...</td></tr>
             ) : usuarios.length === 0 ? (
-              <tr><td colSpan={6} className={styles.empty}>No se encontraron usuarios</td></tr>
+              <tr><td colSpan={5} className={styles.empty}>No se encontraron usuarios</td></tr>
             ) : (
               usuarios.map((u) => (
-                <tr key={u.id} className={selected.has(u.id) ? styles.rowSelected : ''}>
-                  <td className={styles.checkCol}>
-                    <input type="checkbox" className={styles.checkbox} checked={selected.has(u.id)} onChange={() => toggleOne(u.id)} />
-                  </td>
+                <tr key={u.id}>
                   <td>
                     <div className={styles.userCell}>
                       <div className={styles.miniAvatar}><IconUserFill /></div>

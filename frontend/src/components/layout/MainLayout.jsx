@@ -7,24 +7,24 @@ const NAV = {
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard', icon: <IconGrid /> },
     { to: '/admin/usuarios', label: 'Gestión de Usuarios', icon: <IconUsers /> },
-    { to: '/admin/cursos', label: 'Cursos', icon: <IconBook /> },
-    { to: '/admin/evaluaciones', label: 'Evaluaciones', icon: <IconClipboard /> },
-    { to: '/admin/certificados', label: 'Certificados', icon: <IconAward /> },
-    { to: '/admin/analiticas', label: 'Analíticas', icon: <IconChart /> },
+    { to: '/admin/cursos', label: 'Aprobación Cursos', icon: <IconBook /> },
     { to: '/admin/auditoria', label: 'Auditoría', icon: <IconShield /> },
+    { to: '/admin/analiticas', label: 'Analíticas', icon: <IconChart /> },
+    { to: '/perfil', label: 'Mi Perfil', icon: <IconUser /> },
   ],
   instructor: [
     { to: '/instructor/dashboard', label: 'Dashboard', icon: <IconGrid /> },
     { to: '/instructor/cursos', label: 'Mis Cursos', icon: <IconBook /> },
-    { to: '/instructor/quizzes', label: 'Quizzes', icon: <IconClipboard /> },
     { to: '/instructor/calificaciones', label: 'Calificaciones', icon: <IconStar /> },
     { to: '/instructor/analiticas', label: 'Analíticas', icon: <IconChart /> },
+    { to: '/perfil', label: 'Mi Perfil', icon: <IconUser /> },
   ],
   estudiante: [
     { to: '/cursos', label: 'Mis Cursos', icon: <IconBook /> },
     { to: '/evaluaciones', label: 'Evaluaciones', icon: <IconClipboard /> },
     { to: '/certificados', label: 'Certificados', icon: <IconAward /> },
     { to: '/progreso', label: 'Mi Progreso', icon: <IconChart /> },
+    { to: '/perfil', label: 'Mi Perfil', icon: <IconUser /> },
   ],
 }
 
@@ -120,4 +120,7 @@ function IconMenu() {
 }
 function IconLogout() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+}
+function IconUser() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
 }

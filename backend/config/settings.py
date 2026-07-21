@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "django_prometheus",
+    "drf_spectacular",
     # Local
     "apps.usuarios",
     "apps.cursos",
@@ -36,6 +37,8 @@ INSTALLED_APPS = [
     "apps.certificados",
     "apps.progreso",
     "apps.analytics",
+    "apps.instructor",
+    "apps.administracion",
 ]
 
 MIDDLEWARE = [
@@ -144,6 +147,48 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# --- OpenAPI / Swagger / ReDoc (drf-spectacular) ---
+SPECTACULAR_SETTINGS = {
+    "TITLE": "EduPath LMS API",
+    "DESCRIPTION": (
+        "API REST de la plataforma educativa EduPath.\n\n"
+        "## Módulos\n"
+        "1. Autenticación y cuentas\n"
+        "2. Catálogo, inscripción y progreso\n"
+        "3. Evaluaciones Canvas\n"
+        "4. Dashboard y PDF\n"
+        "5. Certificados (HMAC + QR)\n"
+        "6. Panel instructor\n"
+        "7. Panel admin\n\n"
+        "Autenticación: JWT Bearer (`Authorization: Bearer <access>`)."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api",
+    "TAGS": [
+        {"name": "auth", "description": "Registro, login, JWT y recuperación"},
+        {"name": "cursos", "description": "Catálogo, inscripción y navegación"},
+        {"name": "progreso", "description": "Marcadores de progreso"},
+        {"name": "evaluaciones", "description": "Quizzes Canvas y validación"},
+        {"name": "analytics", "description": "Dashboard y exportación PDF"},
+        {"name": "certificados", "description": "Emisión y verificación pública"},
+        {"name": "instructor", "description": "Panel instructor"},
+        {"name": "admin", "description": "Panel administración"},
+    ],
+    "SECURITY": [{"bearerAuth": []}],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
 }
 
 # --- JWT (autenticación segura) ---
@@ -178,6 +223,15 @@ PASSWORD_RESET_TIMEOUT = int(os.getenv("PASSWORD_RESET_TIMEOUT", "3600"))  # 1 h
 
 # Certificados: clave para firma HMAC (en prod usar KMS / secreto montado)
 CERT_SIGNING_SECRET = os.getenv("CERT_SIGNING_SECRET", SECRET_KEY)
+# URL pública de verificación (QR apunta aquí; puede ser frontend o API)
+CERT_PUBLIC_VERIFY_URL = os.getenv(
+    "CERT_PUBLIC_VERIFY_URL",
+    "http://127.0.0.1:8000/api/certificados/verificar/{codigo}/",
+)
+CERT_FRONTEND_VERIFY_URL = os.getenv(
+    "CERT_FRONTEND_VERIFY_URL",
+    "http://localhost:5173/verificar/{codigo}",
+)
 
 # Legacy bridge
 LEGACY_SYNC_API_KEY = os.getenv("LEGACY_SYNC_API_KEY", "legacy-dev-key")

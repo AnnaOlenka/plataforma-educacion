@@ -205,8 +205,12 @@ App: `cursos`
 | descripcion | TextField | |
 | instructor_id | FK → Usuario | PROTECT |
 | portada | ImageField | nullable, `cursos/` |
-| estado | CharField(20) | `borrador` \| `publicado` \| `archivado` |
+| estado | CharField(30) | `borrador` \| `pendiente_aprobacion` \| `publicado` \| `rechazado` \| `archivado` |
 | nivel | CharField(50) | default `intermedio` |
+| solicitado_en | DateTimeField | nullable |
+| revisado_en | DateTimeField | nullable |
+| revisado_por_id | FK → Usuario | nullable, SET_NULL |
+| motivo_rechazo | TextField | |
 | creado_en | DateTimeField | auto_now_add |
 | actualizado_en | DateTimeField | auto_now |
 
@@ -232,6 +236,8 @@ App: `cursos`
 | orden | PositiveIntegerField | unique con módulo |
 | tipo | CharField(20) | `contenido` \| `video` \| `quiz` \| `recurso` |
 | contenido | TextField | opcional |
+| recurso_url | URLField | opcional |
+| archivo | FileField | nullable, `lecciones/` |
 | duracion_minutos | PositiveIntegerField | default 10 |
 | es_obligatoria | BooleanField | default True |
 
@@ -300,9 +306,30 @@ App: `evaluaciones`
 | respuestas | JSONField | |
 | canvas_payload | JSONField | opcional |
 | puntaje | DecimalField(5,2) | |
+| puntaje_automatico | DecimalField(5,2) | auto-grader |
 | aprobado | BooleanField | |
+| estado | CharField | `en_curso` \| `finalizado` \| `pendiente_revision` \| `revisado` |
+| feedback_instructor | TextField | |
+| calificado_por_id | FK → Usuario | nullable |
+| calificado_en | DateTimeField | nullable |
 | iniciado_en | DateTimeField | auto_now_add |
 | finalizado_en | DateTimeField | nullable |
+
+### AuditLogCalificacion
+App: `administracion`
+
+| Atributo | Tipo | Notas |
+|----------|------|-------|
+| id | PK | Automático |
+| intento_id | FK → IntentoEvaluacion | CASCADE |
+| actor_id | FK → Usuario | SET_NULL |
+| accion | CharField | `calificacion_manual` \| `ajuste` \| `revocacion` |
+| puntaje_anterior / puntaje_nuevo | DecimalField | |
+| aprobado_anterior / aprobado_nuevo | BooleanField | |
+| feedback_anterior / feedback_nuevo | TextField | |
+| detalle_anterior / detalle_nuevo | JSONField | |
+| motivo | TextField | |
+| creado_en | DateTimeField | auto_now_add |
 
 ### Certificado
 App: `certificados`

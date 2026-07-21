@@ -53,6 +53,26 @@ class Command(BaseCommand):
             estudiante.set_password("estudiante123")
             estudiante.save()
 
+        admin_user, created = Usuario.objects.get_or_create(
+            username="admin",
+            defaults={
+                "email": "admin@edupath.local",
+                "rol": Usuario.Rol.ADMIN,
+                "first_name": "Ada",
+                "last_name": "Admin",
+                "is_staff": True,
+                "is_superuser": True,
+            },
+        )
+        if created:
+            admin_user.set_password("admin123")
+            admin_user.save()
+        elif admin_user.rol != Usuario.Rol.ADMIN:
+            admin_user.rol = Usuario.Rol.ADMIN
+            admin_user.is_staff = True
+            admin_user.is_superuser = True
+            admin_user.save(update_fields=["rol", "is_staff", "is_superuser"])
+
         curso, _ = Curso.objects.get_or_create(
             slug="introduccion-web",
             defaults={
@@ -88,29 +108,102 @@ class Command(BaseCommand):
             },
         )
 
-        eval_, _ = Evaluacion.objects.get_or_create(
+        eval_, created_eval = Evaluacion.objects.get_or_create(
             leccion=lec_quiz,
             defaults={
-                "titulo": "Identifica el hotspot correcto",
+                "titulo": "Quiz interactivo Canvas",
                 "puntaje_aprobacion": 70,
+                "tiempo_limite_seg": 600,
                 "canvas_schema": {
+                    "width": 640,
+                    "height": 360,
+                    "background": "#0f172a",
                     "hotspots": [
                         {"id": "a", "x": 160, "y": 180, "r": 36, "label": "Zona A"},
                         {"id": "b", "x": 320, "y": 160, "r": 36, "label": "Zona B"},
                         {"id": "c", "x": 480, "y": 200, "r": 36, "label": "Zona C"},
-                    ]
+                    ],
+                    "items": [
+                        {"id": "html", "label": "HTML", "x": 40, "y": 40},
+                        {"id": "css", "label": "CSS", "x": 40, "y": 100},
+                    ],
+                    "targets": [
+                        {"id": "markup", "label": "Marcato", "x": 400, "y": 40, "w": 160, "h": 48},
+                        {"id": "estilo", "label": "Estilos", "x": 400, "y": 100, "w": 160, "h": 48},
+                    ],
                 },
             },
         )
-        Pregunta.objects.get_or_create(
+        if not created_eval:
+            eval_.titulo = "Quiz interactivo Canvas"
+            eval_.canvas_schema = {
+                "width": 640,
+                "height": 360,
+                "background": "#0f172a",
+                "hotspots": [
+                    {"id": "a", "x": 160, "y": 180, "r": 36, "label": "Zona A"},
+                    {"id": "b", "x": 320, "y": 160, "r": 36, "label": "Zona B"},
+                    {"id": "c", "x": 480, "y": 200, "r": 36, "label": "Zona C"},
+                ],
+                "items": [
+                    {"id": "html", "label": "HTML", "x": 40, "y": 40},
+                    {"id": "css", "label": "CSS", "x": 40, "y": 100},
+                ],
+                "targets": [
+                    {"id": "markup", "label": "Marcato", "x": 400, "y": 40, "w": 160, "h": 48},
+                    {"id": "estilo", "label": "Estilos", "x": 400, "y": 100, "w": 160, "h": 48},
+                ],
+            }
+            eval_.save()
+
+        Pregunta.objects.update_or_create(
             evaluacion=eval_,
             orden=1,
             defaults={
                 "enunciado": "Selecciona la Zona B en el lienzo.",
                 "tipo": Pregunta.Tipo.CANVAS_HOTSPOT,
-                "puntaje": 10,
+                "puntaje": 40,
+                "opciones": [],
                 "respuesta_correcta": {"hotspot_id": "b"},
-                "canvas_config": eval_.canvas_schema,
+                "canvas_config": {
+                    "hotspots": eval_.canvas_schema["hotspots"],
+                    "feedback_ok": "Correcto: Zona B seleccionada.",
+                    "feedback_fail": "Esa no es la Zona B. Prueba otra área.",
+                },
+            },
+        )
+        Pregunta.objects.update_or_create(
+            evaluacion=eval_,
+            orden=2,
+            defaults={
+                "enunciado": "Arrastra cada tecnología a su categoría.",
+                "tipo": Pregunta.Tipo.CANVAS_ARRASTRAR,
+                "puntaje": 40,
+                "opciones": [],
+                "respuesta_correcta": {
+                    "asignaciones": {"html": "markup", "css": "estilo"}
+                },
+                "canvas_config": {
+                    "items": eval_.canvas_schema["items"],
+                    "targets": eval_.canvas_schema["targets"],
+                    "feedback_ok": "¡Todas las asignaciones son correctas!",
+                    "feedback_fail": "Revisa el emparejamiento HTML/CSS.",
+                },
+            },
+        )
+        Pregunta.objects.update_or_create(
+            evaluacion=eval_,
+            orden=3,
+            defaults={
+                "enunciado": "Canvas se usa en el frontend para gráficos interactivos.",
+                "tipo": Pregunta.Tipo.VERDADERO_FALSO,
+                "puntaje": 20,
+                "opciones": [True, False],
+                "respuesta_correcta": {"valor": True},
+                "canvas_config": {
+                    "feedback_ok": "Así es.",
+                    "feedback_fail": "Canvas sí se usa para gráficos interactivos.",
+                },
             },
         )
 
