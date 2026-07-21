@@ -55,19 +55,21 @@ export function ProgressBar({ pct }) {
   )
 }
 
-const GRADIENTS = [
-  'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  'linear-gradient(135deg, #0ea5e9, #6366f1)',
-  'linear-gradient(135deg, #10b981, #0ea5e9)',
-  'linear-gradient(135deg, #f59e0b, #ef4444)',
-  'linear-gradient(135deg, #ec4899, #8b5cf6)',
-  'linear-gradient(135deg, #14b8a6, #6366f1)',
+const COLORS = [
+  '#6366f1',
+  '#0ea5e9',
+  '#10b981',
+  '#f59e0b',
+  '#ec4899',
+  '#14b8a6',
+  '#ef4444',
+  '#8b5cf6',
 ]
 
-/** Degradado determinista según el curso (para portadas sin imagen). */
+/** Color sólido determinista según el curso (para portadas sin imagen). */
 export function gradientFor(curso) {
-  const idx = (curso?.id || curso?.titulo?.length || 0) % GRADIENTS.length
-  return GRADIENTS[idx]
+  const idx = (curso?.id || curso?.titulo?.length || 0) % COLORS.length
+  return COLORS[idx]
 }
 
 /** Portada del curso con placeholder degradado determinista. */

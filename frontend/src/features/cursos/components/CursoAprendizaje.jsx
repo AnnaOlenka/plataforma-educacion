@@ -19,6 +19,18 @@ import {
   IconQuiz,
   TIPO_LABEL,
 } from './cursosUi'
+
+const IconDownloadCloud = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/>
+    <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
+  </svg>
+)
+const IconOfflineDone = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+)
 import styles from './CursoAprendizaje.module.css'
 
 const API_BASE = 'http://localhost:8000'
@@ -306,10 +318,22 @@ export default function CursoAprendizaje() {
           ) : (
             <>
               <div className={styles.leccionHeader}>
-                <span className={styles.leccionTag}>
-                  <LeccionTipoIcon tipo={leccion.tipo} />
-                  {TIPO_LABEL[leccion.tipo] || leccion.tipo}
-                </span>
+                <div className={styles.leccionHeaderTop}>
+                  <span className={styles.leccionTag}>
+                    <LeccionTipoIcon tipo={leccion.tipo} />
+                    {TIPO_LABEL[leccion.tipo] || leccion.tipo}
+                  </span>
+                  <button
+                    type="button"
+                    className={`${styles.offlineBtn} ${descargada ? styles.offlineBtnDone : ''}`}
+                    onClick={onDescargarOffline}
+                    disabled={descargada || modoOffline}
+                    title={descargada ? 'Disponible sin conexión' : 'Guardar para leer sin conexión'}
+                  >
+                    {descargada ? <IconOfflineDone /> : <IconDownloadCloud />}
+                    {descargada ? 'Offline' : 'Guardar offline'}
+                  </button>
+                </div>
                 <h1 className={styles.leccionH1}>{leccion.titulo}</h1>
                 <div className={styles.leccionMetaRow}>
                   <span className={styles.leccionMetaItem}>
@@ -321,16 +345,8 @@ export default function CursoAprendizaje() {
                     </span>
                   )}
                   {modoOffline && (
-                    <span className={styles.leccionMetaItem}>Modo offline</span>
+                    <span className={styles.leccionMetaItem}>📴 Modo offline</span>
                   )}
-                  <button
-                    type="button"
-                    className={styles.navBtn}
-                    onClick={onDescargarOffline}
-                    disabled={descargada || modoOffline}
-                  >
-                    {descargada ? 'Disponible offline ✓' : 'Descargar offline'}
-                  </button>
                 </div>
               </div>
 
@@ -380,9 +396,12 @@ export default function CursoAprendizaje() {
 }
 
 /* ── Cuerpo de la lección según tipo ── */
+const IMG_EXT = /\.(jpe?g|png|gif|webp|svg|avif)(\?.*)?$/i
+
 function LeccionContenido({ leccion, onIrEvaluacion }) {
   const video = leccion.tipo === 'video' ? resolverVideo(leccion.recurso_url) : null
   const archivo = mediaUrl(leccion.archivo)
+  const esImagen = archivo && IMG_EXT.test(archivo)
   const tieneContenido = leccion.contenido?.trim()
 
   return (
@@ -411,6 +430,13 @@ function LeccionContenido({ leccion, onIrEvaluacion }) {
         </a>
       )}
 
+      {/* Imagen adjunta inline */}
+      {esImagen && (
+        <div className={styles.leccionImgWrap}>
+          <img src={archivo} alt={leccion.titulo} className={styles.leccionImg} />
+        </div>
+      )}
+
       {/* Contenido textual */}
       {tieneContenido ? (
         <div className={styles.prose}>{leccion.contenido}</div>
@@ -422,13 +448,13 @@ function LeccionContenido({ leccion, onIrEvaluacion }) {
         )
       )}
 
-      {/* Recurso descargable / enlace */}
-      {archivo && (
+      {/* Archivo descargable (no imagen) */}
+      {archivo && !esImagen && (
         <a className={styles.resourceCard} href={archivo} target="_blank" rel="noreferrer">
           <span className={styles.resourceIcon}><IconFileText /></span>
           <span className={styles.resourceText}>
             <span className={styles.resourceTitle}>Material de la lección</span>
-            <span className={styles.resourceSub}>Abrir recurso adjunto</span>
+            <span className={styles.resourceSub}>Descargar archivo adjunto</span>
           </span>
           <span className={styles.resourceArrow}><IconChevron /></span>
         </a>
