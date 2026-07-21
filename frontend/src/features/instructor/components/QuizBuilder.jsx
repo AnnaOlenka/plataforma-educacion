@@ -363,12 +363,20 @@ function PreguntaEditor({ pregunta: p, index, onChange, onDelete, onOpcion, onAd
     <div className={styles.moduloCard} style={{ marginBottom: '0.85rem' }}>
       <div className={styles.moduloHead}>
         <span className={styles.moduloNum}>{index + 1}</span>
-        <select className={styles.select} style={{ width: 'auto', flex: 1, maxWidth: 240, height: 34 }}
-          value={p.tipo} onChange={(e) => onChange({ tipo: e.target.value })}>
-          {TIPOS.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
-        </select>
-        <input type="number" min="1" className={styles.input} style={{ width: 90, height: 34 }}
-          value={p.puntaje} onChange={(e) => onChange({ puntaje: e.target.value })} title="Puntaje" />
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 90px', gap: '0.75rem', alignItems: 'end' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tipo de pregunta</span>
+            <select className={styles.select} style={{ width: '100%' }}
+              value={p.tipo} onChange={(e) => onChange({ tipo: e.target.value })}>
+              {TIPOS.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Puntos</span>
+            <input type="number" min="1" className={styles.input} style={{ width: '100%', height: 34 }}
+              value={p.puntaje} onChange={(e) => onChange({ puntaje: e.target.value })} />
+          </div>
+        </div>
         {canDelete && (
           <button className={`${styles.btnIcon} ${styles.btnIconDanger}`} onClick={onDelete} title="Eliminar"><IconTrash /></button>
         )}

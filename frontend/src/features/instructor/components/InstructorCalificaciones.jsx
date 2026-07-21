@@ -162,7 +162,18 @@ function GradeModal({ intento, onClose, onSaved, notify }) {
   const [feedback, setFeedback] = useState(intento.feedback_instructor || '')
   const [saving, setSaving] = useState(false)
 
-  const detalle = intento.detalle_calificacion || []
+  const yaRevisado = intento.estado === 'revisado'
+  const detalleRaw = intento.detalle_calificacion || []
+  // Si ya fue revisado manualmente, actualizar el puntaje del ítem dibujo con lo real
+  const detalle = detalleRaw.map((d) => {
+    const esManual = d.tipo === 'canvas_dibujo' || d.detalle?.tipo === 'canvas_dibujo'
+    if (esManual && yaRevisado) {
+      const ptosAuto = detalleRaw.filter(x => x.tipo !== 'canvas_dibujo' && x.detalle?.tipo !== 'canvas_dibujo').reduce((s, x) => s + (x.puntaje || 0), 0)
+      const ptosManual = Math.max(0, Math.round((Number(intento.puntaje) / 100) * (detalleRaw.reduce((s, x) => s + (x.puntaje_max || 0), 0))) - ptosAuto)
+      return { ...d, puntaje: ptosManual }
+    }
+    return d
+  })
   const respuestas = intento.respuestas || {}
   const canvas = intento.canvas_payload || {}
 
@@ -202,30 +213,33 @@ function GradeModal({ intento, onClose, onSaved, notify }) {
             <div className={styles.field}>
               <label className={styles.label}>Auto-calificación por pregunta</label>
               <div style={{ border: '1px solid #f3f4f6', borderRadius: 10, overflow: 'hidden' }}>
-                {detalle.map((d, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.6rem',
-                      padding: '0.6rem 0.85rem',
-                      borderBottom: i < detalle.length - 1 ? '1px solid #f6f7f9' : 'none',
-                    }}
-                  >
-                    <span style={{
-                      width: 22, height: 22, borderRadius: '50%', flexShrink: 0, color: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: d.correcta ? '#16a34a' : '#dc2626',
-                    }}>
-                      {d.correcta ? <IconCheck /> : <IconX />}
-                    </span>
-                    <span style={{ flex: 1, fontSize: '0.82rem', color: '#6b7280' }}>
-                      {d.feedback || `Pregunta ${i + 1}`}
-                    </span>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: d.correcta ? '#16a34a' : '#9ca3af' }}>
-                      {d.puntaje}/{d.puntaje_max} pts
-                    </span>
-                  </div>
-                ))}
+                {detalle.map((d, i) => {
+                  const esManual = d.tipo === 'canvas_dibujo' || d.detalle?.tipo === 'canvas_dibujo'
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.6rem',
+                        padding: '0.6rem 0.85rem',
+                        borderBottom: i < detalle.length - 1 ? '1px solid #f6f7f9' : 'none',
+                      }}
+                    >
+                      <span style={{
+                        width: 22, height: 22, borderRadius: '50%', flexShrink: 0, color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: esManual ? '#d97706' : d.correcta ? '#16a34a' : '#dc2626',
+                      }}>
+                        {esManual ? <span style={{ fontSize: '0.65rem', fontWeight: 700 }}>•••</span> : d.correcta ? <IconCheck /> : <IconX />}
+                      </span>
+                      <span style={{ flex: 1, fontSize: '0.82rem', color: '#6b7280' }}>
+                        {esManual ? 'Pendiente de revisión manual' : (d.feedback || `Pregunta ${i + 1}`)}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: esManual ? '#d97706' : d.correcta ? '#16a34a' : '#9ca3af' }}>
+                        {d.puntaje}/{d.puntaje_max} pts
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
               <span className={styles.hint}>
                 Puntaje automático: {Math.round(Number(intento.puntaje_automatico || 0))}%
@@ -401,7 +415,7 @@ function StrokeCanvas({ strokes }) {
     <svg
       viewBox={`0 0 ${w} ${h}`}
       width="100%"
-      style={{ maxWidth: w, background: '#0f172a', borderRadius: 8, display: 'block' }}
+      style={{ maxWidth: w, background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', display: 'block' }}
     >
       {strokes.map((s, i) => {
         if (s.points && Array.isArray(s.points)) {
@@ -411,7 +425,7 @@ function StrokeCanvas({ strokes }) {
               key={i}
               d={d}
               fill="none"
-              stroke={s.color || '#38bdf8'}
+              stroke={s.color || '#111827'}
               strokeWidth={s.width || 2}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -419,7 +433,7 @@ function StrokeCanvas({ strokes }) {
           )
         }
         if (s.path) {
-          return <path key={i} d={s.path} fill="none" stroke={s.color || '#38bdf8'} strokeWidth={s.width || 2} />
+          return <path key={i} d={s.path} fill="none" stroke={s.color || '#111827'} strokeWidth={s.width || 2} />
         }
         return null
       })}

@@ -10,6 +10,7 @@ import {
 import { completarLeccion } from '../../cursos/services/cursosService'
 import HotspotCanvas from './HotspotCanvas'
 import DragDropCanvas from './DragDropCanvas'
+import DibujoCanvas from './DibujoCanvas'
 import {
   IconChevron, IconClock, IconTarget, IconAward, IconCheck, IconX,
   IconList, IconArrowRight, IconRefresh, TIPO_LABEL, TipoIcon,
@@ -403,7 +404,14 @@ function Pregunta({ pregunta, index, schema, respuesta, canvasItem, feedback, on
         />
       )}
 
-      {feedback && (
+      {pregunta.tipo === 'canvas_dibujo' && (
+        <DibujoCanvas
+          value={canvasItem?.strokes || []}
+          onChange={(strokes) => onCanvas(pregunta, { strokes })}
+        />
+      )}
+
+      {feedback && pregunta.tipo !== 'canvas_dibujo' && (
         <div className={`${styles.feedback} ${feedback.correcta ? styles.feedbackOk : styles.feedbackFail}`}>
           {feedback.correcta ? <IconCheck /> : <IconX />}
           {feedback.mensaje || (feedback.correcta ? '¡Correcto!' : 'Revisa tu respuesta')}
@@ -442,7 +450,7 @@ function Resultado({ evaluacion, resultado, preguntas, onReintentar, onVolver })
           <span className={styles.resultScoreLabel}>{resultado.puntos_obtenidos ?? '—'}/{resultado.puntos_totales ?? '—'} pts</span>
         </div>
         <span className={styles.resultStatusBadge}>
-          {revision ? '⏳ En revisión' : aprobado ? '✓ Aprobado' : '✗ No aprobado'}
+          {revision ? 'En revisión' : aprobado ? '✓ Aprobado' : '✗ No aprobado'}
         </span>
         <h1 className={styles.resultTitle}>
           {revision ? 'Enviado para revisión' : aprobado ? '¡Buen trabajo!' : 'Sigue intentando'}
@@ -464,14 +472,24 @@ function Resultado({ evaluacion, resultado, preguntas, onReintentar, onVolver })
             const p = pregById[d.pregunta_id]
             return (
               <div key={i} className={styles.resultQ}>
-                <span className={`${styles.resultQIcon} ${d.correcta ? styles.resultQIconOk : styles.resultQIconFail}`}>
-                  {d.correcta ? <IconCheck /> : <IconX />}
-                </span>
+                {p?.tipo === 'canvas_dibujo' ? (
+                  <span className={styles.resultQIcon} style={{ background: '#fffbeb', color: '#d97706' }}>
+                    <IconClock />
+                  </span>
+                ) : (
+                  <span className={`${styles.resultQIcon} ${d.correcta ? styles.resultQIconOk : styles.resultQIconFail}`}>
+                    {d.correcta ? <IconCheck /> : <IconX />}
+                  </span>
+                )}
                 <div className={styles.resultQBody}>
                   <div className={styles.resultQText}>{p?.enunciado || `Pregunta ${i + 1}`}</div>
-                  {d.feedback && <div className={styles.resultQFeedback}>{d.feedback}</div>}
+                  {p?.tipo === 'canvas_dibujo'
+                    ? <div className={styles.resultQFeedback}>Pendiente de revisión manual por el instructor</div>
+                    : d.feedback && <div className={styles.resultQFeedback}>{d.feedback}</div>
+                  }
                 </div>
-                <span className={`${styles.resultQScore} ${d.correcta ? styles.resultQScoreOk : styles.resultQScoreFail}`}>
+                <span className={`${styles.resultQScore} ${p?.tipo === 'canvas_dibujo' ? '' : d.correcta ? styles.resultQScoreOk : styles.resultQScoreFail}`}
+                  style={p?.tipo === 'canvas_dibujo' ? { color: '#d97706' } : {}}>
                   {d.puntaje}/{d.puntaje_max} pts
                 </span>
               </div>
