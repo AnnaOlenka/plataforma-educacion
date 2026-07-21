@@ -39,6 +39,8 @@ export default function CursoEditor() {
     try {
       const { data } = await getCursoContenido(slug)
       setCurso(data)
+    } catch {
+      setCurso(null)
     } finally {
       setLoading(false)
     }

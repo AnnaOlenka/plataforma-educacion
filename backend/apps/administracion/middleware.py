@@ -41,15 +41,19 @@ class AuditMiddleware:
             from .models import RegistroAuditoria
 
             objeto_id = next(iter(match.groupdict().values()), "")
-            RegistroAuditoria.objects.create(
-                usuario=user,
-                accion=RegistroAuditoria.Accion.ACCESO_CONTENIDO,
-                objeto_tipo=objeto_tipo,
-                objeto_id=str(objeto_id),
-                ruta=request.path,
-                metodo=request.method,
-                ip=self._ip(request),
-            )
+            try:
+                RegistroAuditoria.objects.create(
+                    usuario=user,
+                    accion=RegistroAuditoria.Accion.ACCESO_CONTENIDO,
+                    objeto_tipo=objeto_tipo,
+                    objeto_id=str(objeto_id),
+                    ruta=request.path,
+                    metodo=request.method,
+                    ip=self._ip(request),
+                )
+            except Exception:
+                # La auditoría no debe tumbar la respuesta del usuario.
+                pass
             break
 
     @staticmethod
