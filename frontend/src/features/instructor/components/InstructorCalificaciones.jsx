@@ -282,59 +282,91 @@ function GradeModal({ intento, onClose, onSaved, notify }) {
   )
 }
 
-function CanvasPreview({ respuestas, canvas }) {
-  const strokes = canvas.strokes || canvas.paths || canvas.dibujo || null
-  const hotspot = canvas.hotspot_id || canvas.selected_hotspot
-  const asignaciones = canvas.asignaciones || respuestas.asignaciones
+function RespuestaCanvasItem({ pregId, valor }) {
+  if (valor === null || valor === undefined) return null
 
-  return (
-    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: '0.85rem', background: '#f9fafb' }}>
-      {hotspot && (
-        <p style={{ margin: '0 0 0.5rem', fontSize: '0.84rem' }}>
-          Hotspot seleccionado: <strong>{String(hotspot)}</strong>
-        </p>
-      )}
-      {asignaciones && typeof asignaciones === 'object' && (
-        <div style={{ marginBottom: '0.5rem' }}>
-          <p style={{ margin: '0 0 0.35rem', fontSize: '0.8rem', color: '#6b7280' }}>Asignaciones:</p>
-          <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem' }}>
+  // Canvas payload object (hotspot, asignaciones, strokes, dataUrl)
+  if (typeof valor === 'object') {
+    const strokes = valor.strokes || valor.paths || valor.dibujo
+    const hotspot = valor.hotspot_id || valor.selected_hotspot
+    const asignaciones = valor.asignaciones
+
+    if (Array.isArray(strokes) && strokes.length > 0) {
+      return (
+        <div>
+          <span style={{ fontSize: '0.78rem', color: '#9ca3af', display: 'block', marginBottom: 4 }}>Pregunta {pregId} · Dibujo</span>
+          <StrokeCanvas strokes={strokes} />
+        </div>
+      )
+    }
+    if (valor.dataUrl) {
+      return (
+        <div>
+          <span style={{ fontSize: '0.78rem', color: '#9ca3af', display: 'block', marginBottom: 4 }}>Pregunta {pregId} · Dibujo</span>
+          <img src={valor.dataUrl} alt="Dibujo" style={{ maxWidth: '100%', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+        </div>
+      )
+    }
+    if (hotspot) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
+          <span style={{ color: '#9ca3af', minWidth: 80 }}>Pregunta {pregId}:</span>
+          <span style={{ fontWeight: 600, color: '#111827' }}>Zona seleccionada: {String(hotspot)}</span>
+        </div>
+      )
+    }
+    if (asignaciones && typeof asignaciones === 'object') {
+      return (
+        <div style={{ fontSize: '0.83rem' }}>
+          <span style={{ color: '#9ca3af', display: 'block', marginBottom: 4 }}>Pregunta {pregId} · Asignaciones:</span>
+          <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
             {Object.entries(asignaciones).map(([k, v]) => (
-              <li key={k}>{k} → {String(v)}</li>
+              <li key={k} style={{ color: '#111827' }}>{k} → {String(v)}</li>
             ))}
           </ul>
         </div>
-      )}
-      {Array.isArray(strokes) && strokes.length > 0 ? (
-        <StrokeCanvas strokes={strokes} />
-      ) : canvas.dataUrl ? (
-        <img src={canvas.dataUrl} alt="Dibujo del estudiante" style={{ maxWidth: '100%', borderRadius: 8, border: '1px solid #e5e7eb' }} />
-      ) : Object.keys(respuestas).length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          {Object.entries(respuestas).map(([pregId, valor]) => {
-            let valorStr
-            if (typeof valor === 'boolean') valorStr = valor ? 'Verdadero' : 'Falso'
-            else if (valor === null || valor === undefined) valorStr = '—'
-            else valorStr = String(valor)
-            return (
-              <div key={pregId} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
-                <span style={{ color: '#9ca3af', minWidth: 80 }}>Pregunta {pregId}:</span>
-                <span style={{ fontWeight: 600, color: '#111827' }}>{valorStr}</span>
-              </div>
-            )
-          })}
-        </div>
-      ) : Object.keys(canvas).length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          {Object.entries(canvas).map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.83rem' }}>
-              <span style={{ color: '#9ca3af', minWidth: 80 }}>{k}:</span>
-              <span style={{ fontWeight: 600, color: '#111827' }}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className={styles.hint}>Sin payload visual adjunto.</p>
-      )}
+      )
+    }
+    // fallback for unknown canvas object
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
+        <span style={{ color: '#9ca3af', minWidth: 80 }}>Pregunta {pregId}:</span>
+        <span style={{ fontWeight: 600, color: '#111827' }}>{JSON.stringify(valor)}</span>
+      </div>
+    )
+  }
+
+  // Simple value (boolean, string, number)
+  let valorStr
+  if (typeof valor === 'boolean') valorStr = valor ? 'Verdadero' : 'Falso'
+  else valorStr = String(valor)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
+      <span style={{ color: '#9ca3af', minWidth: 80 }}>Pregunta {pregId}:</span>
+      <span style={{ fontWeight: 600, color: '#111827' }}>{valorStr}</span>
+    </div>
+  )
+}
+
+function CanvasPreview({ respuestas, canvas }) {
+  // Merge both dicts by pregunta_id; canvas wins on conflict
+  const allIds = [...new Set([...Object.keys(respuestas), ...Object.keys(canvas)])]
+    .sort((a, b) => Number(a) - Number(b))
+
+  if (allIds.length === 0) {
+    return (
+      <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: '0.85rem', background: '#f9fafb' }}>
+        <p className={styles.hint}>Sin respuestas registradas.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: '0.85rem', background: '#f9fafb', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      {allIds.map((id) => {
+        const valor = canvas[id] !== undefined ? canvas[id] : respuestas[id]
+        return <RespuestaCanvasItem key={id} pregId={id} valor={valor} />
+      })}
     </div>
   )
 }
