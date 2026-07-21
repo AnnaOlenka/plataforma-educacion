@@ -348,11 +348,14 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  overflow: hidden;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #6366f1;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .userName  { font-weight: 600; color: #111827; font-size: 0.875rem; line-height: 1.3; }

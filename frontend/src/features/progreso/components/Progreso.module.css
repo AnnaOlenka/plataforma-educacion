@@ -11,8 +11,8 @@
 .headerActions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
 
 /* Stats */
-.statsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-.statCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.statCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.04); min-height: 80px; }
 .statIcon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .statIconBlue { background: #eff6ff; color: #3b82f6; }
 .statIconIndigo { background: #eef2ff; color: #6366f1; }
@@ -43,7 +43,7 @@
 .courseTitle { font-size: 0.86rem; font-weight: 600; color: #111827; }
 .coursePct { font-size: 0.8rem; font-weight: 700; color: #6366f1; }
 .track { width: 100%; height: 6px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
-.fill { height: 100%; background: linear-gradient(90deg,#6366f1,#8b5cf6); border-radius: 99px; transition: width 0.4s; }
+.fill { height: 100%; background: #6366f1; border-radius: 99px; transition: width 0.4s; }
 .courseMeta { display: flex; gap: 1rem; font-size: 0.75rem; color: #9ca3af; }
 
 /* Evaluaciones */
@@ -59,8 +59,14 @@
 .btnPrimary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; border: none; border-radius: 8px; font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
 .btnPrimary:hover:not(:disabled) { opacity: .88; }
 .btnPrimary:disabled { opacity: .5; cursor: not-allowed; }
-.btnGhost { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.82rem; color: #374151; cursor: pointer; transition: background .12s; }
+.btnGhost { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.82rem; color: #374151; cursor: pointer; transition: background .12s; }
 .btnGhost:hover { background: #f3f4f6; }
+
+@media (max-width: 860px) {
+  .heroCard { grid-template-columns: 1fr; }
+  .heroLeft { border-right: none; border-bottom: 1px solid #f3f4f6; }
+  .heroRings { justify-content: center; }
+}
 
 /* State */
 .stateWrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; text-align: center; }
@@ -71,20 +77,35 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Hero progress */
-.heroCard { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px; padding: 2rem; color: #fff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
-.heroInfo { flex: 1; min-width: 200px; }
-.heroTitle { font-size: 1rem; font-weight: 500; opacity: .85; margin: 0 0 0.25rem; }
-.heroPct { font-size: 3rem; font-weight: 800; line-height: 1; margin: 0 0 0.5rem; }
-.heroSub { font-size: 0.84rem; opacity: .8; margin: 0; }
-.heroStats { display: flex; gap: 2rem; flex-wrap: wrap; }
-.heroStat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
-.heroStatVal { font-size: 1.4rem; font-weight: 700; }
-.heroStatLbl { font-size: 0.72rem; opacity: .75; }
+.heroCard {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+  padding: 0; margin-bottom: 1.5rem; overflow: hidden;
+  display: grid; grid-template-columns: 1fr auto;
+  box-shadow: 0 2px 8px rgba(17,24,39,.05);
+}
+.heroLeft {
+  padding: 2rem 2.5rem;
+  border-right: 1px solid #f3f4f6;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.heroLabel { font-size: 0.78rem; font-weight: 600; color: #6366f1; text-transform: uppercase; letter-spacing: .04em; margin: 0; }
+.heroInfo { display: flex; flex-direction: column; gap: 0.2rem; }
+.heroTitle { font-size: 0.9rem; font-weight: 500; color: #6b7280; margin: 0; }
+.heroPct { font-size: 3.2rem; font-weight: 800; line-height: 1; color: #111827; margin: 0; }
+.heroSub { font-size: 0.83rem; color: #9ca3af; margin: 0; }
+.heroStats { display: flex; gap: 0; border-top: 1px solid #f3f4f6; margin-top: 0.5rem; }
+.heroStat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.85rem 1.5rem; border-right: 1px solid #f3f4f6; flex: 1; }
+.heroStat:last-child { border-right: none; }
+.heroStatVal { font-size: 1.25rem; font-weight: 700; color: #111827; }
+.heroStatLbl { font-size: 0.71rem; color: #9ca3af; }
 
-.heroRings { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: center; }
+.heroRings { display: flex; gap: 2.5rem; align-items: center; padding: 2rem 3rem; flex: 1; justify-content: center; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+.ringWrap { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 .ringLabelLight { font-size: 0.72rem; color: rgba(255,255,255,.85); text-align: center; }
-.heroCard .ringWrap { color: #fff; }
-.heroCard .ringWrap text { fill: #fff !important; }
+
+.btnPrimary { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btnPrimary:hover:not(:disabled) { background: #4f46e5; }
+.btnPrimary:disabled { opacity: .5; cursor: not-allowed; }
 
 .select {
   height: 40px; padding: 0 0.85rem; border: 1px solid #e5e7eb; border-radius: 8px;

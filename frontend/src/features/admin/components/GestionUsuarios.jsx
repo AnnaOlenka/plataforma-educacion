@@ -3,6 +3,12 @@ import { useForm } from 'react-hook-form'
 import { getUsuarios, createUsuario, deleteUsuario, updateUsuario } from '../services/usuariosService'
 import styles from './GestionUsuarios.module.css'
 
+const AVATAR_COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#14b8a6','#ef4444','#8b5cf6']
+function avatarColor(str) {
+  const c = (str || 'U').charCodeAt(0)
+  return AVATAR_COLORS[c % AVATAR_COLORS.length]
+}
+
 const ROL_BADGE = {
   admin:      { label: 'Admin',      cls: styles.badgeAdmin },
   instructor: { label: 'Instructor', cls: styles.badgeInstructor },
@@ -187,7 +193,9 @@ export default function GestionUsuarios() {
                 <tr key={u.id}>
                   <td>
                     <div className={styles.userCell}>
-                      <div className={styles.miniAvatar}><IconUserFill /></div>
+                      <div className={styles.miniAvatar} style={{ background: avatarColor(u.first_name?.[0] || u.username?.[0]), color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>
+                        {(u.first_name?.[0] || u.username?.[0] || 'U').toUpperCase()}
+                      </div>
                       <div>
                         <div className={styles.userName}>
                           {u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username}

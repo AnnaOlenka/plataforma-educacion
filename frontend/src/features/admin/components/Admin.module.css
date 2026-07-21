@@ -140,7 +140,7 @@
   height: 32px; padding: 0 0.75rem;
   border: 1px solid #e5e7eb; border-radius: 6px;
   font-size: 0.82rem; color: #374151; outline: none;
-  background: #fff; width: 220px; transition: border-color .15s;
+  background: #fff; width: 300px; transition: border-color .15s;
 }
 .searchInput:focus { border-color: #6366f1; }
 

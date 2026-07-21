@@ -1,23 +1,49 @@
 .page { padding: 2rem 2.5rem; min-height: 100%; }
 
-.pageHeader { padding-bottom: 1.25rem; border-bottom: 1px solid #f3f4f6; margin-bottom: 1.5rem; }
+.pageHeader { margin-bottom: 1.75rem; }
 .pageTitle { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 0.2rem; }
 .pageDesc { font-size: 0.83rem; color: #6b7280; margin: 0; }
 
-/* Hero */
-.heroCard { display: flex; align-items: center; gap: 1.25rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1.75rem; box-shadow: 0 1px 4px rgba(17,24,39,.05); }
-.heroAvatar { width: 60px; height: 60px; border-radius: 50%; background: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; flex-shrink: 0; color: #fff; }
-.heroName { font-size: 1.2rem; font-weight: 700; line-height: 1.3; color: #111827; }
-.heroMeta { font-size: 0.84rem; color: #6b7280; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.rolBadge { background: #eef2ff; color: #6366f1; border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.75rem; font-weight: 600; }
+/* Layout dos columnas */
+.layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
+@media (max-width: 780px) { .layout { grid-template-columns: 1fr; } }
 
-/* Tabs */
-.tabs { display: flex; gap: 0.25rem; background: #f3f4f6; border-radius: 10px; padding: 0.25rem; margin-bottom: 1.5rem; width: fit-content; }
-.tab { padding: 0.4rem 1.1rem; border-radius: 8px; font-size: 0.84rem; font-weight: 500; color: #6b7280; border: none; background: none; cursor: pointer; transition: all .15s; }
-.tabActive { background: #fff; color: #111827; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+/* Panel izquierdo */
+.sidebar { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Hero */
+.heroCard {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+  padding: 2rem 1.5rem; box-shadow: 0 1px 4px rgba(17,24,39,.05);
+}
+.heroAvatar {
+  width: 72px; height: 72px; border-radius: 50%; background: #6366f1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.85rem; font-weight: 800; color: #fff; margin-bottom: 0.85rem;
+}
+.heroName { font-size: 1rem; font-weight: 700; color: #111827; margin-bottom: 0.3rem; }
+.heroMeta { font-size: 0.82rem; color: #6b7280; display: flex; align-items: center; justify-content: center; gap: 0.4rem; flex-wrap: wrap; }
+.rolBadge { background: #eef2ff; color: #6366f1; border-radius: 20px; padding: 0.15rem 0.6rem; font-size: 0.73rem; font-weight: 600; }
+
+/* Tabs (vertical en sidebar) */
+.tabs { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.tab {
+  display: flex; align-items: center; gap: 0.6rem;
+  width: 100%; padding: 0.8rem 1.1rem;
+  border: none; background: none; cursor: pointer;
+  font-size: 0.85rem; font-weight: 500; color: #6b7280;
+  border-bottom: 1px solid #f3f4f6; text-align: left;
+  transition: background .12s, color .12s;
+}
+.tab:last-child { border-bottom: none; }
+.tab:hover { background: #f9fafb; color: #111827; }
+.tabActive { background: #f5f3ff; color: #6366f1; font-weight: 600; }
+.tabActive svg { color: #6366f1; }
 
 /* Form card */
-.formCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.75rem; max-width: 560px; }
+.formCard { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 2rem; box-shadow: 0 1px 4px rgba(17,24,39,.05); }
+.formTitle { font-size: 0.95rem; font-weight: 700; color: #111827; margin: 0 0 1.5rem; padding-bottom: 0.85rem; border-bottom: 1px solid #f3f4f6; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 @media (max-width: 540px) { .grid2 { grid-template-columns: 1fr; } }
@@ -25,7 +51,7 @@
 .field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 1rem; }
 .label { font-size: 0.82rem; font-weight: 600; color: #374151; }
 .input { padding: 0.6rem 0.85rem; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; color: #111827; outline: none; transition: border-color .15s; }
-.input:focus { border-color: #6366f1; }
+.input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.08); }
 .inputDisabled { background: #f9fafb; color: #9ca3af; cursor: not-allowed; }
 .errorMsg { font-size: 0.77rem; color: #ef4444; }
 .hint { font-size: 0.77rem; color: #9ca3af; }

@@ -309,13 +309,29 @@ function CanvasPreview({ respuestas, canvas }) {
       ) : canvas.dataUrl ? (
         <img src={canvas.dataUrl} alt="Dibujo del estudiante" style={{ maxWidth: '100%', borderRadius: 8, border: '1px solid #e5e7eb' }} />
       ) : Object.keys(respuestas).length > 0 ? (
-        <pre style={{ margin: 0, fontSize: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#374151' }}>
-          {JSON.stringify(respuestas, null, 2)}
-        </pre>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          {Object.entries(respuestas).map(([pregId, valor]) => {
+            let valorStr
+            if (typeof valor === 'boolean') valorStr = valor ? 'Verdadero' : 'Falso'
+            else if (valor === null || valor === undefined) valorStr = '—'
+            else valorStr = String(valor)
+            return (
+              <div key={pregId} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.83rem' }}>
+                <span style={{ color: '#9ca3af', minWidth: 80 }}>Pregunta {pregId}:</span>
+                <span style={{ fontWeight: 600, color: '#111827' }}>{valorStr}</span>
+              </div>
+            )
+          })}
+        </div>
       ) : Object.keys(canvas).length > 0 ? (
-        <pre style={{ margin: 0, fontSize: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#374151' }}>
-          {JSON.stringify(canvas, null, 2)}
-        </pre>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          {Object.entries(canvas).map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.83rem' }}>
+              <span style={{ color: '#9ca3af', minWidth: 80 }}>{k}:</span>
+              <span style={{ fontWeight: 600, color: '#111827' }}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+            </div>
+          ))}
+        </div>
       ) : (
         <p className={styles.hint}>Sin payload visual adjunto.</p>
       )}

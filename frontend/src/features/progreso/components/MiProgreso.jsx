@@ -29,14 +29,14 @@ function gradientFor(i) {
   return `linear-gradient(135deg,${a},${b})`
 }
 
-function ProgressRing({ pct, size = 88, stroke = 8, color = '#6366f1' }) {
+function ProgressRing({ pct, size = 88, stroke = 8, color = '#6366f1', textColor = '#111827', trackColor = '#f3f4f6' }) {
   const r = (size - stroke) / 2
   const circ = 2 * Math.PI * r
   const dash = (circ * Math.min(Math.max(pct || 0, 0), 100)) / 100
   const id = `pg-${color.replace('#', '')}-${size}`
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={trackColor} strokeWidth={stroke} />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -59,9 +59,9 @@ function ProgressRing({ pct, size = 88, stroke = 8, color = '#6366f1' }) {
         y="50%"
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize="15"
+        fontSize="17"
         fontWeight="700"
-        fill="#111827"
+        fill={textColor}
       >
         {Math.round(pct || 0)}%
       </text>
@@ -189,47 +189,43 @@ export default function MiProgreso() {
       ) : (
         <>
           <div className={styles.heroCard}>
-            <div className={styles.heroRings}>
-              <div className={styles.ringWrap}>
-                <ProgressRing pct={res.porcentaje_completado} color="#fff" />
-                <span className={styles.ringLabelLight}>Completado</span>
+            <div className={styles.heroLeft}>
+              <p className={styles.heroLabel}>{cursoSlug ? 'Progreso del curso' : 'Resumen general'}</p>
+              <div className={styles.heroInfo}>
+                <p className={styles.heroTitle}>Porcentaje completado</p>
+                <p className={styles.heroPct}>{Math.round(res.porcentaje_completado || 0)}%</p>
+                <p className={styles.heroSub}>
+                  {res.lecciones_completadas || 0} de {res.lecciones_totales || 0} lecciones completadas
+                  {res.lecciones_en_progreso ? ` · ${res.lecciones_en_progreso} en progreso` : ''}
+                </p>
               </div>
-              <div className={styles.ringWrap}>
-                <ProgressRing pct={desempeno.promedio_puntaje} color="#a5b4fc" />
-                <span className={styles.ringLabelLight}>Desempeño</span>
-              </div>
-              <div className={styles.ringWrap}>
-                <ProgressRing pct={desempeno.tasa_aprobacion_pct} color="#c4b5fd" />
-                <span className={styles.ringLabelLight}>Aprobación</span>
-              </div>
-            </div>
-            <div className={styles.heroInfo}>
-              <p className={styles.heroTitle}>
-                {cursoSlug ? 'Progreso del curso' : 'Progreso general'}
-              </p>
-              <p className={styles.heroPct}>{Math.round(res.porcentaje_completado || 0)}%</p>
-              <p className={styles.heroSub}>
-                {res.lecciones_completadas || 0} de {res.lecciones_totales || 0} lecciones
-                completadas
-                {res.lecciones_en_progreso
-                  ? ` · ${res.lecciones_en_progreso} en progreso`
-                  : ''}
-              </p>
               <div className={styles.heroStats}>
                 <div className={styles.heroStat}>
                   <span className={styles.heroStatVal}>{res.cursos_inscritos ?? cursos.length}</span>
                   <span className={styles.heroStatLbl}>Cursos</span>
                 </div>
                 <div className={styles.heroStat}>
-                  <span className={styles.heroStatVal}>
-                    {fmtTiempo(res.tiempo_segundos, res.tiempo_formato)}
-                  </span>
+                  <span className={styles.heroStatVal}>{fmtTiempo(res.tiempo_segundos, res.tiempo_formato)}</span>
                   <span className={styles.heroStatLbl}>Tiempo</span>
                 </div>
                 <div className={styles.heroStat}>
                   <span className={styles.heroStatVal}>{desempeno.intentos || 0}</span>
                   <span className={styles.heroStatLbl}>Intentos</span>
                 </div>
+              </div>
+            </div>
+            <div className={styles.heroRings}>
+              <div className={styles.ringWrap}>
+                <ProgressRing pct={res.porcentaje_completado} color="#fff" size={110} stroke={9} textColor="#fff" trackColor="rgba(255,255,255,.2)" />
+                <span className={styles.ringLabelLight}>Completado</span>
+              </div>
+              <div className={styles.ringWrap}>
+                <ProgressRing pct={desempeno.promedio_puntaje} color="#a5b4fc" size={110} stroke={9} textColor="#fff" trackColor="rgba(255,255,255,.2)" />
+                <span className={styles.ringLabelLight}>Desempeño</span>
+              </div>
+              <div className={styles.ringWrap}>
+                <ProgressRing pct={desempeno.tasa_aprobacion_pct} color="#c4b5fd" size={110} stroke={9} textColor="#fff" trackColor="rgba(255,255,255,.2)" />
+                <span className={styles.ringLabelLight}>Aprobación</span>
               </div>
             </div>
           </div>

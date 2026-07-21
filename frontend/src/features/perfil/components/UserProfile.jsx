@@ -75,36 +75,49 @@ export default function UserProfile() {
 
   const rolLabel = { estudiante: 'Estudiante', instructor: 'Instructor', admin: 'Administrador' }
 
+  function IconUser() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  }
+  function IconLock() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>Mi perfil</h1>
-          <p className={styles.pageDesc}>Gestiona tu información personal y seguridad</p>
-        </div>
+        <h1 className={styles.pageTitle}>Mi perfil</h1>
+        <p className={styles.pageDesc}>Gestiona tu información personal y seguridad</p>
       </div>
 
-      {/* Avatar hero */}
-      <div className={styles.heroCard}>
-        <div className={styles.heroAvatar}>
-          {(user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase()}
-        </div>
-        <div>
-          <div className={styles.heroName}>{user?.first_name} {user?.last_name}</div>
-          <div className={styles.heroMeta}>@{user?.username} · <span className={styles.rolBadge}>{rolLabel[user?.rol] || user?.rol}</span></div>
-        </div>
-      </div>
+      <div className={styles.layout}>
+        {/* Sidebar izquierda */}
+        <div className={styles.sidebar}>
+          <div className={styles.heroCard}>
+            <div className={styles.heroAvatar}>
+              {(user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase()}
+            </div>
+            <div className={styles.heroName}>{user?.first_name} {user?.last_name}</div>
+            <div className={styles.heroMeta}>
+              @{user?.username} · <span className={styles.rolBadge}>{rolLabel[user?.rol] || user?.rol}</span>
+            </div>
+          </div>
 
-      {/* Tabs */}
-      <div className={styles.tabs}>
-        <button className={`${styles.tab} ${tab === 'perfil' ? styles.tabActive : ''}`} onClick={() => setTab('perfil')}>Datos personales</button>
-        <button className={`${styles.tab} ${tab === 'seguridad' ? styles.tabActive : ''}`} onClick={() => setTab('seguridad')}>Seguridad</button>
-      </div>
+          <div className={styles.tabs}>
+            <button className={`${styles.tab} ${tab === 'perfil' ? styles.tabActive : ''}`} onClick={() => setTab('perfil')}>
+              <IconUser /> Datos personales
+            </button>
+            <button className={`${styles.tab} ${tab === 'seguridad' ? styles.tabActive : ''}`} onClick={() => setTab('seguridad')}>
+              <IconLock /> Seguridad
+            </button>
+          </div>
+        </div>
 
-      {loading ? (
-        <div className={styles.stateWrap}><div className={styles.spinner} /></div>
-      ) : tab === 'perfil' ? (
+        {/* Contenido derecha */}
+        {loading ? (
+          <div className={styles.stateWrap}><div className={styles.spinner} /></div>
+        ) : tab === 'perfil' ? (
         <div className={styles.formCard}>
+          <h2 className={styles.formTitle}>Datos personales</h2>
           <form onSubmit={profileForm.handleSubmit(onSaveProfile)} noValidate>
             <div className={styles.grid2}>
               <div className={styles.field}>
@@ -142,8 +155,9 @@ export default function UserProfile() {
             </div>
           </form>
         </div>
-      ) : (
+        ) : (
         <div className={styles.formCard}>
+          <h2 className={styles.formTitle}>Cambiar contraseña</h2>
           <form onSubmit={passForm.handleSubmit(onChangePass)} noValidate>
             {passError && <div className={styles.apiError}>{passError}</div>}
             <div className={styles.field}>
@@ -177,7 +191,8 @@ export default function UserProfile() {
             </div>
           </form>
         </div>
-      )}
+        )}
+      </div>
 
       {toast && (
         <div className={`${styles.toast} ${toast.type === 'error' ? styles.toastErr : styles.toastOk}`}>

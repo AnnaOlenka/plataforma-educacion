@@ -28,6 +28,12 @@ const NAV = {
   ],
 }
 
+const AVATAR_COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#14b8a6','#ef4444','#8b5cf6']
+function avatarColor(str) {
+  const c = (str || 'U').charCodeAt(0)
+  return AVATAR_COLORS[c % AVATAR_COLORS.length]
+}
+
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { user, logout } = useAuthStore()
@@ -67,7 +73,7 @@ export default function MainLayout() {
 
         <div className={styles.sidebarBottom}>
           <div className={styles.userCard}>
-            <div className={styles.avatar}>
+            <div className={styles.avatar} style={{ background: avatarColor(user?.first_name?.[0] || user?.username?.[0]) }}>
               {(user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase()}
             </div>
             {!collapsed && (
