@@ -121,6 +121,12 @@ export default function LoginPage() {
             ¿Olvidaste tu contraseña?
           </Link>
 
+          <p className={styles.registerLink}>
+            ¿No tienes cuenta?{' '}
+            <Link to="/register" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>
+              Regístrate gratis
+            </Link>
+          </p>
         </div>
 
         <div className={styles.wave} aria-hidden="true" />

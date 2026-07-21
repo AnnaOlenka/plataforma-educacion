@@ -18,9 +18,12 @@ import InstructorAnalitica from '../features/instructor/components/InstructorAna
 import AdminDashboard from '../features/admin/components/AdminDashboard'
 import AdminCursos from '../features/admin/components/AdminCursos'
 import AdminAuditoria from '../features/admin/components/AdminAuditoria'
+import AdminAnaliticas from '../features/admin/components/AdminAnaliticas'
+import UserProfile from '../features/perfil/components/UserProfile'
 import MiProgreso from '../features/progreso/components/MiProgreso'
 import MisCertificados from '../features/certificados/components/MisCertificados'
 import VerificarCertificado from '../features/certificados/components/VerificarCertificado'
+import RegisterPage from '../features/auth/components/RegisterPage'
 import useAuthStore from '../store/authStore'
 
 function ProtectedRoute({ children, roles }) {
@@ -35,6 +38,7 @@ export default function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/recuperar-cuenta" element={<ResetPasswordPage />} />
 
@@ -49,7 +53,16 @@ export default function AppRouter() {
           <Route path="usuarios" element={<GestionUsuarios />} />
           <Route path="cursos" element={<AdminCursos />} />
           <Route path="auditoria" element={<AdminAuditoria />} />
-          <Route path="analiticas" element={<AdminDashboard />} />
+          <Route path="analiticas" element={<AdminAnaliticas />} />
+        </Route>
+
+        {/* Perfil (todos los roles autenticados) */}
+        <Route path="/perfil" element={
+          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<UserProfile />} />
         </Route>
 
         {/* Instructor */}
