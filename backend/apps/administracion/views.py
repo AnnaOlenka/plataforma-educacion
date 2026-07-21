@@ -14,12 +14,13 @@ from rest_framework.views import APIView
 from apps.cursos.models import Curso
 from apps.usuarios.permissions import EsAdmin
 
-from .models import AuditLogCalificacion
+from .models import AuditLogCalificacion, RegistroAuditoria
 from .serializers import (
     AdminCursoSerializer,
     AdminUsuarioSerializer,
     AuditLogCalificacionSerializer,
     RechazoCursoSerializer,
+    RegistroAuditoriaSerializer,
 )
 
 Usuario = get_user_model()
@@ -43,10 +44,12 @@ class AdminPanelResumenView(APIView):
                     estado=Curso.Estado.PUBLICADO
                 ).count(),
                 "auditorias_calificacion": AuditLogCalificacion.objects.count(),
+                "registros_auditoria": RegistroAuditoria.objects.count(),
                 "enlaces": {
                     "usuarios": "/api/admin/usuarios/",
                     "cursos_pendientes": "/api/admin/cursos/?estado=pendiente_aprobacion",
                     "auditoria": "/api/admin/auditoria/calificaciones/",
+                    "auditoria_general": "/api/admin/auditoria/registros/",
                 },
             }
         )
@@ -205,3 +208,16 @@ class AdminAuditoriaCalificacionViewSet(mixins.ListModelMixin, mixins.RetrieveMo
                 | Q(motivo__icontains=search)
             )
         return qs
+
+
+class AdminRegistroAuditoriaViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """Auditoría general: accesos a contenido y emisión de certificados (RNF05)."""
+
+    permission_classes = [EsAdmin]
+    serializer_class = RegistroAuditoriaSerializer
+    filterset_fields = ("accion", "usuario", "objeto_tipo")
+    search_fields = ("usuario__username", "objeto_tipo", "objeto_id", "ruta")
+    ordering_fields = ("creado_en",)
+
+    def get_queryset(self):
+        return RegistroAuditoria.objects.select_related("usuario")

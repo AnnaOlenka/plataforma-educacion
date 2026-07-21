@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AuditLogCalificacion
+from .models import AuditLogCalificacion, RegistroAuditoria
 
 
 @admin.register(AuditLogCalificacion)
@@ -29,5 +29,23 @@ class AuditLogCalificacionAdmin(admin.ModelAdmin):
         "detalle_anterior",
         "detalle_nuevo",
         "motivo",
+        "creado_en",
+    )
+
+
+@admin.register(RegistroAuditoria)
+class RegistroAuditoriaAdmin(admin.ModelAdmin):
+    list_display = ("id", "accion", "usuario", "objeto_tipo", "objeto_id", "ip", "creado_en")
+    list_filter = ("accion", "objeto_tipo", "creado_en")
+    search_fields = ("usuario__username", "objeto_tipo", "objeto_id", "ruta")
+    readonly_fields = (
+        "usuario",
+        "accion",
+        "objeto_tipo",
+        "objeto_id",
+        "ruta",
+        "metodo",
+        "ip",
+        "detalle",
         "creado_en",
     )

@@ -45,3 +45,39 @@ class AuditLogCalificacion(models.Model):
 
     def __str__(self):
         return f"{self.accion} intento={self.intento_id} by={self.actor_id}"
+
+
+class RegistroAuditoria(models.Model):
+    """Trazabilidad general: accesos a contenido y emisión de certificados (RNF05)."""
+
+    class Accion(models.TextChoices):
+        ACCESO_CONTENIDO = "acceso_contenido", "Acceso a contenido"
+        EMISION_CERTIFICADO = "emision_certificado", "Emisión de certificado"
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="registros_auditoria",
+    )
+    accion = models.CharField(max_length=40, choices=Accion.choices)
+    objeto_tipo = models.CharField(max_length=100, blank=True)
+    objeto_id = models.CharField(max_length=50, blank=True)
+    ruta = models.CharField(max_length=255, blank=True)
+    metodo = models.CharField(max_length=10, blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    detalle = models.JSONField(default=dict, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-creado_en"]
+        verbose_name = "Registro de auditoría"
+        verbose_name_plural = "Registros de auditoría"
+        indexes = [
+            models.Index(fields=["accion", "-creado_en"]),
+            models.Index(fields=["usuario", "-creado_en"]),
+        ]
+
+    def __str__(self):
+        return f"{self.accion} · {self.objeto_tipo}#{self.objeto_id} by={self.usuario_id}"

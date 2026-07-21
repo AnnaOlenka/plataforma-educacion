@@ -75,4 +75,15 @@ def emitir_certificado(estudiante, curso_ref) -> tuple[Certificado, bool]:
         insc.progreso_pct = max(float(insc.progreso_pct), 100)
         insc.save(update_fields=["estado", "progreso_pct"])
 
+    if created:
+        from apps.administracion.models import RegistroAuditoria
+
+        RegistroAuditoria.objects.create(
+            usuario=estudiante,
+            accion=RegistroAuditoria.Accion.EMISION_CERTIFICADO,
+            objeto_tipo="Certificado",
+            objeto_id=str(cert.codigo),
+            detalle={"curso": curso.slug, "curso_id": curso.id},
+        )
+
     return cert, created

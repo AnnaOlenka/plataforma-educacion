@@ -24,10 +24,10 @@ import MiProgreso from '../features/progreso/components/MiProgreso'
 import MisCertificados from '../features/certificados/components/MisCertificados'
 import VerificarCertificado from '../features/certificados/components/VerificarCertificado'
 import RegisterPage from '../features/auth/components/RegisterPage'
-import useAuthStore from '../store/authStore'
+import useAuthContext from '../hooks/useAuthContext'
 
 function ProtectedRoute({ children, roles }) {
-  const { token, user } = useAuthStore()
+  const { token, user } = useAuthContext()
   if (!token) return <Navigate to="/login" replace />
   if (roles && user && !roles.includes(user.rol)) return <Navigate to="/login" replace />
   return children

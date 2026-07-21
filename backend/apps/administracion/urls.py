@@ -5,6 +5,7 @@ from .views import (
     AdminAuditoriaCalificacionViewSet,
     AdminCursoViewSet,
     AdminPanelResumenView,
+    AdminRegistroAuditoriaViewSet,
     AdminUsuarioViewSet,
 )
 
@@ -15,6 +16,11 @@ router.register(
     "auditoria/calificaciones",
     AdminAuditoriaCalificacionViewSet,
     basename="admin-auditoria-calificacion",
+)
+router.register(
+    "auditoria/registros",
+    AdminRegistroAuditoriaViewSet,
+    basename="admin-registro-auditoria",
 )
 
 urlpatterns = [

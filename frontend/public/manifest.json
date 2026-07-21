@@ -1,0 +1,13 @@
+{
+  "name": "EduPath LMS",
+  "short_name": "EduPath",
+  "description": "Plataforma de educación continua, evaluación interactiva y certificación verificable.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

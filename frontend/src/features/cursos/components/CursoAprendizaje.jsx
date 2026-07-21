@@ -4,6 +4,11 @@ import { getNavegacion, getLeccion } from '../services/cursosService'
 import useProgressTracker from '../hooks/useProgressTracker'
 import useToast from '../hooks/useToast.jsx'
 import {
+  guardarLeccionOffline,
+  leccionDisponibleOffline,
+  leerLeccionOffline,
+} from '../../../utils/offlineLecciones'
+import {
   LeccionTipoIcon,
   IconArrowLeft,
   IconArrowRight,
@@ -51,6 +56,8 @@ export default function CursoAprendizaje() {
   const [activeId, setActiveId] = useState(null)
   const [leccion, setLeccion] = useState(null)
   const [loadingLeccion, setLoadingLeccion] = useState(false)
+  const [modoOffline, setModoOffline] = useState(false)
+  const [descargada, setDescargada] = useState(false)
 
   // Lista plana ordenada de lecciones (para prev/next y estado).
   const flat = useMemo(() => {
@@ -109,7 +116,7 @@ export default function CursoAprendizaje() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
-  /* ── Carga de la lección activa ── */
+  /* ── Carga de la lección activa (con fallback offline) ── */
   useEffect(() => {
     if (!activeId) return
     let vivo = true
@@ -117,9 +124,19 @@ export default function CursoAprendizaje() {
       setLoadingLeccion(true)
       try {
         const { data } = await getLeccion(activeId)
-        if (vivo) setLeccion(data)
+        if (!vivo) return
+        setLeccion(data)
+        setModoOffline(false)
       } catch {
-        if (vivo) notify('No se pudo cargar la lección', 'error')
+        const guardada = await leerLeccionOffline(activeId)
+        if (!vivo) return
+        if (guardada) {
+          setLeccion(guardada)
+          setModoOffline(true)
+          notify('Sin conexión: mostrando versión descargada', 'success')
+        } else {
+          notify('No se pudo cargar la lección', 'error')
+        }
       } finally {
         if (vivo) setLoadingLeccion(false)
       }
@@ -129,6 +146,27 @@ export default function CursoAprendizaje() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId])
+
+  /* ── Estado de descarga offline de la lección activa ── */
+  useEffect(() => {
+    if (!activeId) return
+    let vivo = true
+    leccionDisponibleOffline(activeId).then((ok) => vivo && setDescargada(ok))
+    return () => {
+      vivo = false
+    }
+  }, [activeId, leccion])
+
+  const onDescargarOffline = async () => {
+    if (!leccion) return
+    const ok = await guardarLeccionOffline(activeId, leccion)
+    if (ok) {
+      setDescargada(true)
+      notify('Lección disponible sin conexión', 'success')
+    } else {
+      notify('Este navegador no soporta descarga offline', 'error')
+    }
+  }
 
   const onCursoProgreso = useCallback((pct) => setCursoPct(pct), [])
 
@@ -282,6 +320,17 @@ export default function CursoAprendizaje() {
                       Lección {activeIdx + 1} de {flat.length}
                     </span>
                   )}
+                  {modoOffline && (
+                    <span className={styles.leccionMetaItem}>Modo offline</span>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.navBtn}
+                    onClick={onDescargarOffline}
+                    disabled={descargada || modoOffline}
+                  >
+                    {descargada ? 'Disponible offline ✓' : 'Descargar offline'}
+                  </button>
                 </div>
               </div>
 

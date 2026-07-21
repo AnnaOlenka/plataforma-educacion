@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from apps.cursos.models import Curso
-from apps.administracion.models import AuditLogCalificacion
+from apps.administracion.models import AuditLogCalificacion, RegistroAuditoria
 
 Usuario = get_user_model()
 
@@ -118,3 +118,24 @@ class AuditLogCalificacionSerializer(serializers.ModelSerializer):
             "motivo",
             "creado_en",
         )
+
+
+class RegistroAuditoriaSerializer(serializers.ModelSerializer):
+    usuario_username = serializers.CharField(source="usuario.username", read_only=True, allow_null=True)
+
+    class Meta:
+        model = RegistroAuditoria
+        fields = (
+            "id",
+            "usuario",
+            "usuario_username",
+            "accion",
+            "objeto_tipo",
+            "objeto_id",
+            "ruta",
+            "metodo",
+            "ip",
+            "detalle",
+            "creado_en",
+        )
+        read_only_fields = fields
