@@ -223,18 +223,21 @@
 }
 .addModuloBtn:hover { border-color: #a5b4fc; background: #f5f3ff; }
 
-/* ── Tabla (calificaciones) ── */
-.tableWrap { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
-.table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+/* ── Tabla (calificaciones / analíticas) ── */
+.tableWrap { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; margin-bottom: 1.5rem; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .table thead tr { background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
 .table thead th {
-  text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 600;
-  color: #9ca3af; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.02em;
+  text-align: left; padding: 0.75rem 1rem;
+  font-size: 0.78rem; font-weight: 600; color: #9ca3af;
+  white-space: nowrap; border-right: 1px solid #e5e7eb;
 }
+.table thead th:last-child { border-right: none; }
 .table tbody tr { border-bottom: 1px solid #f3f4f6; transition: background 0.1s; }
 .table tbody tr:last-child { border-bottom: none; }
 .table tbody tr:hover { background: #fafbff; }
-.table td { padding: 0.7rem 1rem; color: #374151; vertical-align: middle; }
+.table td { padding: 0.55rem 1rem; color: #374151; vertical-align: middle; border-right: 1px solid #f3f4f6; }
+.table td:last-child { border-right: none; }
 .tdStudent { display: flex; align-items: center; gap: 0.6rem; }
 .miniAvatar {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
