@@ -127,7 +127,7 @@ class CursoListSerializer(serializers.ModelSerializer):
         return Inscripcion.objects.filter(
             estudiante=request.user,
             curso=obj,
-            estado=Inscripcion.Estado.ACTIVA,
+            estado__in=[Inscripcion.Estado.ACTIVA, Inscripcion.Estado.COMPLETADA],
         ).exists()
 
 

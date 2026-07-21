@@ -77,7 +77,8 @@ class CursoViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             ctx["inscrito_curso_ids"] = set(
                 Inscripcion.objects.filter(
-                    estudiante=user, estado=Inscripcion.Estado.ACTIVA
+                    estudiante=user,
+                    estado__in=[Inscripcion.Estado.ACTIVA, Inscripcion.Estado.COMPLETADA],
                 ).values_list("curso_id", flat=True)
             )
         else:

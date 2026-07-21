@@ -182,11 +182,18 @@ export default function CursoDetalle() {
               (curso.titulo?.[0] || 'C').toUpperCase()
             )}
           </div>
+
+          {inscrito && (
+            <div className={styles.inscritoStatus}>
+              <IconCheck /> {done ? 'Curso completado' : 'Ya estás inscrito'}
+            </div>
+          )}
+
           <div className={styles.heroCardBody}>
             {inscrito && (
               <div className={styles.progressBlock}>
                 <div className={styles.progressRow}>
-                  <span>{done ? 'Curso completado' : 'Tu progreso'}</span>
+                  <span>{done ? 'Completado' : 'Tu progreso'}</span>
                   <span className={styles.progressPct}>{Math.round(pct)}%</span>
                 </div>
                 <div className={styles.progressTrack}>
@@ -206,18 +213,22 @@ export default function CursoDetalle() {
                 >
                   <IconPlay /> {done ? 'Repasar curso' : pct > 0 ? 'Continuar' : 'Empezar curso'}
                 </button>
-                <button className={styles.btnDanger} onClick={onCancelar} disabled={accion}>
-                  Cancelar inscripción
-                </button>
+                {!done && (
+                  <button className={styles.btnDanger} onClick={onCancelar} disabled={accion}>
+                    Cancelar inscripción
+                  </button>
+                )}
               </>
             ) : (
               <>
                 <button className={styles.btnPrimary} onClick={onInscribir} disabled={accion}>
                   {accion ? 'Inscribiendo…' : (<><IconCheck /> Inscribirme gratis</>)}
                 </button>
-                <p className={styles.cardHint}>
-                  Inscríbete para acceder a todas las lecciones y evaluaciones.
-                </p>
+                <div className={styles.cardPerks}>
+                  <span className={styles.cardPerk}><IconCheck /> Acceso completo a lecciones</span>
+                  <span className={styles.cardPerk}><IconCheck /> Evaluaciones con retroalimentación</span>
+                  <span className={styles.cardPerk}><IconCheck /> Certificado al completar</span>
+                </div>
               </>
             )}
           </div>

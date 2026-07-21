@@ -40,13 +40,11 @@ export default function CatalogoCursos() {
       ])
       const lista = unwrapList(cursosData)
       const inscripciones = unwrapList(inscData)
-      const inscSlugSet = new Set(inscripciones.map((i) => i.curso_slug || i.curso?.slug))
       const completadoSlugSet = new Set(
         inscripciones.filter((i) => i.estado === 'completada').map((i) => i.curso_slug || i.curso?.slug)
       )
       setCursos(lista.map((c) => ({
         ...c,
-        inscrito: inscSlugSet.has(c.slug),
         completado: completadoSlugSet.has(c.slug),
       })))
     } catch {
