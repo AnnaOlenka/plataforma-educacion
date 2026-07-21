@@ -279,31 +279,34 @@ function Intro({ evaluacion, intentos, onIniciar }) {
 
   return (
     <div className={styles.introCard}>
+      {/* Columna izquierda: descripción + stats */}
       <div className={styles.introHero}>
         <div className={styles.introHeroIcon}><IconList /></div>
+        <span className={styles.introEvalTag}><IconTarget /> Evaluación</span>
         <h1 className={styles.introTitle}>{evaluacion.titulo}</h1>
-        <p className={styles.introSub}>Evaluación interactiva con validación en tiempo real</p>
+        <p className={styles.introSub}>Evaluación interactiva con retroalimentación en tiempo real.</p>
+
+        <div className={styles.introStats}>
+          <div className={styles.statBox}>
+            <div className={styles.statValue}>{evaluacion.preguntas?.length || 0}</div>
+            <div className={styles.statLabel}>Preguntas</div>
+          </div>
+          <div className={styles.statBox}>
+            <div className={styles.statValue}>{Math.round((evaluacion.tiempo_limite_seg || 600) / 60)}′</div>
+            <div className={styles.statLabel}>Tiempo límite</div>
+          </div>
+          <div className={styles.statBox}>
+            <div className={styles.statValue}>{evaluacion.puntaje_aprobacion}%</div>
+            <div className={styles.statLabel}>Para aprobar</div>
+          </div>
+        </div>
       </div>
 
-      <div className={styles.introStats}>
-        <div className={styles.statBox}>
-          <div className={styles.statValue}>{evaluacion.preguntas?.length || 0}</div>
-          <div className={styles.statLabel}>Preguntas</div>
-        </div>
-        <div className={styles.statBox}>
-          <div className={styles.statValue}>{Math.round((evaluacion.tiempo_limite_seg || 600) / 60)}′</div>
-          <div className={styles.statLabel}>Tiempo límite</div>
-        </div>
-        <div className={styles.statBox}>
-          <div className={styles.statValue}>{evaluacion.puntaje_aprobacion}%</div>
-          <div className={styles.statLabel}>Para aprobar</div>
-        </div>
-      </div>
-
+      {/* Columna derecha: intentos + tips + botón */}
       <div className={styles.introBody}>
         {finalizados.length > 0 && (
-          <>
-            <h2 className={styles.introBodyTitle}>Tus intentos anteriores</h2>
+          <div>
+            <h2 className={styles.introBodyTitle}>Intentos anteriores</h2>
             <div className={styles.attemptList}>
               {finalizados.slice(0, 3).map((i) => (
                 <div key={i.id} className={styles.attemptRow}>
@@ -316,16 +319,19 @@ function Intro({ evaluacion, intentos, onIniciar }) {
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
 
-        <ul className={styles.tipsList}>
-          <li className={styles.tipItem}><IconTarget /> Vale {totalPts} puntos en total; necesitas {evaluacion.puntaje_aprobacion}% para aprobar.</li>
-          <li className={styles.tipItem}><IconCheck /> Recibes retroalimentación instantánea al responder cada pregunta.</li>
-          <li className={styles.tipItem}><IconClock /> El intento se envía automáticamente al agotarse el tiempo.</li>
-        </ul>
+        <div>
+          <h2 className={styles.introBodyTitle}>A tener en cuenta</h2>
+          <ul className={styles.tipsList}>
+            <li className={styles.tipItem}><IconTarget /> Vale {totalPts} pts en total; necesitas {evaluacion.puntaje_aprobacion}% para aprobar.</li>
+            <li className={styles.tipItem}><IconCheck /> Recibes retroalimentación instantánea al responder.</li>
+            <li className={styles.tipItem}><IconClock /> El intento se envía automáticamente al agotarse el tiempo.</li>
+          </ul>
+        </div>
 
-        <button className={styles.btnPrimary} style={{ width: '100%' }} onClick={onIniciar}>
+        <button className={styles.btnPrimary} style={{ width: '100%', marginTop: 'auto' }} onClick={onIniciar}>
           {mejor > 0 ? 'Reintentar evaluación' : 'Comenzar evaluación'}
         </button>
       </div>
@@ -429,53 +435,60 @@ function Resultado({ evaluacion, resultado, preguntas, onReintentar, onVolver })
 
   return (
     <div className={styles.resultCard}>
+      {/* Columna izquierda: puntuación */}
       <div className={`${styles.resultHero} ${heroCls}`}>
         <div className={styles.resultScoreRing}>
           <span className={styles.resultScore}>{pct}%</span>
           <span className={styles.resultScoreLabel}>{resultado.puntos_obtenidos ?? '—'}/{resultado.puntos_totales ?? '—'} pts</span>
         </div>
+        <span className={styles.resultStatusBadge}>
+          {revision ? '⏳ En revisión' : aprobado ? '✓ Aprobado' : '✗ No aprobado'}
+        </span>
         <h1 className={styles.resultTitle}>
-          {revision ? 'Enviado para revisión' : aprobado ? '¡Aprobaste!' : 'No alcanzaste el mínimo'}
+          {revision ? 'Enviado para revisión' : aprobado ? '¡Buen trabajo!' : 'Sigue intentando'}
         </h1>
         <p className={styles.resultSub}>
           {revision
             ? 'Tu instructor revisará las preguntas manuales pronto.'
             : aprobado
-            ? `Superaste el ${evaluacion.puntaje_aprobacion}% requerido. ¡Buen trabajo!`
-            : `Necesitabas ${evaluacion.puntaje_aprobacion}% para aprobar. Puedes reintentarlo.`}
+            ? `Superaste el ${evaluacion.puntaje_aprobacion}% requerido.`
+            : `Necesitabas ${evaluacion.puntaje_aprobacion}% para aprobar.`}
         </p>
       </div>
 
-      <div className={styles.resultDetail}>
-        <h2 className={styles.resultDetailTitle}>Detalle por pregunta</h2>
-        {detalle.map((d, i) => {
-          const p = pregById[d.pregunta_id]
-          return (
-            <div key={i} className={styles.resultQ}>
-              <span className={`${styles.resultQIcon} ${d.correcta ? styles.resultQIconOk : styles.resultQIconFail}`}>
-                {d.correcta ? <IconCheck /> : <IconX />}
-              </span>
-              <div className={styles.resultQBody}>
-                <div className={styles.resultQText}>{p?.enunciado || `Pregunta ${i + 1}`}</div>
-                {d.feedback && <div className={styles.resultQFeedback}>{d.feedback}</div>}
+      {/* Columna derecha: detalle + acciones */}
+      <div>
+        <div className={styles.resultDetail}>
+          <h2 className={styles.resultDetailTitle}>Detalle por pregunta</h2>
+          {detalle.map((d, i) => {
+            const p = pregById[d.pregunta_id]
+            return (
+              <div key={i} className={styles.resultQ}>
+                <span className={`${styles.resultQIcon} ${d.correcta ? styles.resultQIconOk : styles.resultQIconFail}`}>
+                  {d.correcta ? <IconCheck /> : <IconX />}
+                </span>
+                <div className={styles.resultQBody}>
+                  <div className={styles.resultQText}>{p?.enunciado || `Pregunta ${i + 1}`}</div>
+                  {d.feedback && <div className={styles.resultQFeedback}>{d.feedback}</div>}
+                </div>
+                <span className={`${styles.resultQScore} ${d.correcta ? styles.resultQScoreOk : styles.resultQScoreFail}`}>
+                  {d.puntaje}/{d.puntaje_max} pts
+                </span>
               </div>
-              <span className={`${styles.resultQScore} ${d.correcta ? styles.resultQScoreOk : styles.resultQScoreFail}`}>
-                {d.puntaje}/{d.puntaje_max} pts
-              </span>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
 
-      <div className={styles.resultActions}>
-        {!aprobado && !revision && (
-          <button className={styles.btnPrimary} onClick={onReintentar}>
-            <IconRefresh /> Reintentar
+        <div className={styles.resultActions}>
+          {!aprobado && !revision && (
+            <button className={styles.btnPrimary} onClick={onReintentar}>
+              <IconRefresh /> Reintentar
+            </button>
+          )}
+          <button className={styles.btnGhost} onClick={onVolver}>
+            {aprobado ? 'Volver al curso' : 'Salir'}
           </button>
-        )}
-        <button className={styles.btnGhost} onClick={onVolver}>
-          {aprobado ? 'Volver al curso' : 'Salir'}
-        </button>
+        </div>
       </div>
     </div>
   )

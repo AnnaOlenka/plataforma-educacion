@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   getCursos,
+  getMisInscripciones,
   inscribirCurso,
   unwrapList,
 } from '../services/cursosService'
@@ -33,8 +34,21 @@ export default function CatalogoCursos() {
       const params = { estado: 'publicado' }
       if (searchVal) params.search = searchVal
       if (nivelVal) params.nivel = nivelVal
-      const { data } = await getCursos(params)
-      setCursos(unwrapList(data))
+      const [{ data: cursosData }, { data: inscData }] = await Promise.all([
+        getCursos(params),
+        getMisInscripciones(),
+      ])
+      const lista = unwrapList(cursosData)
+      const inscripciones = unwrapList(inscData)
+      const inscSlugSet = new Set(inscripciones.map((i) => i.curso_slug || i.curso?.slug))
+      const completadoSlugSet = new Set(
+        inscripciones.filter((i) => i.estado === 'completada').map((i) => i.curso_slug || i.curso?.slug)
+      )
+      setCursos(lista.map((c) => ({
+        ...c,
+        inscrito: inscSlugSet.has(c.slug),
+        completado: completadoSlugSet.has(c.slug),
+      })))
     } catch {
       notify('No se pudo cargar el catálogo', 'error')
     } finally {

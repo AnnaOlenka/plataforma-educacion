@@ -21,6 +21,7 @@ import {
  */
 export default function CursoCard({ curso, onOpen, onPrimary, loading, progresoPct }) {
   const inscrito = curso.inscrito
+  const completado = curso.completado || (progresoPct != null && progresoPct >= 100)
   const mostrarProgreso = progresoPct != null
 
   return (
@@ -55,24 +56,25 @@ export default function CursoCard({ curso, onOpen, onPrimary, loading, progresoP
       {mostrarProgreso && <ProgressBar pct={progresoPct} />}
 
       <div className={styles.cardFooter}>
-        {inscrito ? (
+        {completado ? (
           <button
             className={styles.btnOutline}
-            onClick={(e) => {
-              e.stopPropagation()
-              onPrimary?.(curso, 'continuar')
-            }}
+            onClick={(e) => { e.stopPropagation(); onPrimary?.(curso, 'continuar') }}
           >
-            <IconPlay /> {mostrarProgreso && progresoPct >= 100 ? 'Repasar' : 'Continuar'}
+            <IconCheck /> Completado · Repasar
+          </button>
+        ) : inscrito ? (
+          <button
+            className={styles.btnOutline}
+            onClick={(e) => { e.stopPropagation(); onPrimary?.(curso, 'continuar') }}
+          >
+            <IconPlay /> Continuar
           </button>
         ) : (
           <button
             className={styles.btnPrimary}
             disabled={loading}
-            onClick={(e) => {
-              e.stopPropagation()
-              onPrimary?.(curso, 'inscribir')
-            }}
+            onClick={(e) => { e.stopPropagation(); onPrimary?.(curso, 'inscribir') }}
           >
             {loading ? 'Inscribiendo…' : (<><IconCheck /> Inscribirme</>)}
           </button>
