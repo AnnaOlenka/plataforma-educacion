@@ -33,10 +33,11 @@ services:
       POSTGRES_DB: edupath
       POSTGRES_USER: edupath
       POSTGRES_PASSWORD: edupath
-      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
-      CSRF_TRUSTED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
+      CSRF_TRUSTED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
       LEGACY_SYNC_API_KEY: legacy-dev-key
       CERT_SIGNING_SECRET: cert-hmac-dev-secret
+      PASSWORD_RESET_FRONTEND_URL: http://localhost:5174/recuperar-cuenta
       GUNICORN_WORKERS: "3"
       EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
       EMAIL_HOST: mailhog

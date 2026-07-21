@@ -1,7 +1,8 @@
 """Servicios de autenticación: correo de recuperación de cuenta."""
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
@@ -21,10 +22,11 @@ def enviar_correo_recuperacion(usuario) -> None:
         "http://localhost:5173/recuperar-cuenta",
     )
     enlace = f"{frontend_base}?uid={uid}&token={token}"
+    nombre = usuario.get_full_name() or usuario.username
 
     asunto = "Recuperación de cuenta — EduPath"
-    mensaje = (
-        f"Hola {usuario.get_full_name() or usuario.username},\n\n"
+    mensaje_texto = (
+        f"Hola {nombre},\n\n"
         "Recibimos una solicitud para restablecer tu contraseña.\n"
         f"Usa este enlace (válido por tiempo limitado):\n\n{enlace}\n\n"
         f"Si el frontend aún no está disponible, puedes confirmar con la API:\n"
@@ -32,10 +34,15 @@ def enviar_correo_recuperacion(usuario) -> None:
         f'{{"uid": "{uid}", "token": "{token}", "new_password": "..."}}\n\n'
         "Si no solicitaste este cambio, ignora este mensaje.\n"
     )
-    send_mail(
-        subject=asunto,
-        message=mensaje,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[usuario.email],
-        fail_silently=False,
+    mensaje_html = render_to_string(
+        "emails/password_reset.html", {"nombre": nombre, "enlace": enlace}
     )
+
+    email = EmailMultiAlternatives(
+        subject=asunto,
+        body=mensaje_texto,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[usuario.email],
+    )
+    email.attach_alternative(mensaje_html, "text/html")
+    email.send(fail_silently=False)
