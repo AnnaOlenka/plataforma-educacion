@@ -49,6 +49,7 @@ El API queda en `http://127.0.0.1:8000/`.
 
 ### Usuarios demo (`seed_demo`)
 
+- Admin: `admin` / `admin123`
 - Instructor: `instructor` / `instructor123`
 - Estudiante: `estudiante` / `estudiante123`
 - Curso: `introduccion-web`

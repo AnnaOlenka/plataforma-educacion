@@ -11,6 +11,21 @@ class Command(BaseCommand):
     help = "Carga datos demo: instructor, curso, módulos, lección quiz Canvas"
 
     def handle(self, *args, **options):
+        admin, created = Usuario.objects.get_or_create(
+            username="admin",
+            defaults={
+                "email": "admin@edupath.local",
+                "rol": Usuario.Rol.ADMIN,
+                "first_name": "Admin",
+                "last_name": "EduPath",
+                "is_staff": True,
+                "is_superuser": True,
+            },
+        )
+        if created:
+            admin.set_password("admin123")
+            admin.save()
+
         instructor, created = Usuario.objects.get_or_create(
             username="instructor",
             defaults={
@@ -104,6 +119,7 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS("Demo lista."))
+        self.stdout.write("  admin / admin123")
         self.stdout.write("  instructor / instructor123")
         self.stdout.write("  estudiante / estudiante123")
         self.stdout.write(f"  curso: {curso.slug} · lecciones: {lec1.id}, quiz: {lec_quiz.id}")
