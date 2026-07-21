@@ -9,3 +9,7 @@ export const exportarPDF = (slug = null) =>
       : '/api/analytics/dashboard/exportar.pdf',
     { responseType: 'blob' }
   )
+
+export const getInstructorAnalytics = () => api.get('/api/analytics/instructor/')
+export const exportarInstructorPDF = () =>
+  api.get('/api/analytics/instructor/exportar.pdf', { responseType: 'blob' })

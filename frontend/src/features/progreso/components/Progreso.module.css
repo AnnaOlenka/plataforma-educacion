@@ -80,3 +80,34 @@
 .heroStat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
 .heroStatVal { font-size: 1.4rem; font-weight: 700; }
 .heroStatLbl { font-size: 0.72rem; opacity: .75; }
+
+.heroRings { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: center; }
+.ringLabelLight { font-size: 0.72rem; color: rgba(255,255,255,.85); text-align: center; }
+.heroCard .ringWrap { color: #fff; }
+.heroCard .ringWrap text { fill: #fff !important; }
+
+.select {
+  height: 40px; padding: 0 0.85rem; border: 1px solid #e5e7eb; border-radius: 8px;
+  background: #fff; font-size: 0.84rem; color: #374151; min-width: 200px;
+}
+.select:focus { outline: none; border-color: #6366f1; }
+
+.emptyPanel { padding: 1.5rem; text-align: center; color: #9ca3af; font-size: 0.84rem; }
+.courseTitleLink {
+  font-size: 0.86rem; font-weight: 600; color: #111827; text-decoration: none;
+}
+.courseTitleLink:hover { color: #6366f1; }
+
+.toast {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100;
+  padding: 0.75rem 1.1rem; border-radius: 10px; color: #fff;
+  font-size: 0.85rem; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.15);
+}
+.toastOk { background: #15803d; }
+.toastErr { background: #b91c1c; }
+
+@media (max-width: 640px) {
+  .page { padding: 1.25rem 1rem; }
+  .heroPct { font-size: 2.25rem; }
+  .heroStats { gap: 1.25rem; }
+}

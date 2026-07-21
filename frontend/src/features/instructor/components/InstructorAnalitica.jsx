@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   getAnalyticsCurso, getMisCursos, unwrap,
 } from '../services/instructorService'
+import { exportarInstructorPDF } from '../../progreso/services/progresoService'
 import {
   IconChevron, IconUsers, IconChart, IconClock, IconAward, IconClipboard, IconArrowLeft,
 } from './instructorUi'
@@ -27,13 +28,13 @@ export default function InstructorAnalitica() {
   const [slug, setSlug] = useState(slugParam || '')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
 
-  // Sin slug: cargar lista para el selector.
   useEffect(() => {
     if (slugParam) return
     ;(async () => {
-      const { data } = await getMisCursos({ page_size: 50 })
-      const lista = unwrap(data)
+      const { data: listaData } = await getMisCursos({ page_size: 50 })
+      const lista = unwrap(listaData)
       setCursos(lista)
       if (lista.length && !slug) setSlug(lista[0].slug)
       else setLoading(false)
@@ -47,8 +48,8 @@ export default function InstructorAnalitica() {
     setLoading(true)
     ;(async () => {
       try {
-        const { data } = await getAnalyticsCurso(slug)
-        if (vivo) setData(data)
+        const { data: analytics } = await getAnalyticsCurso(slug)
+        if (vivo) setData(analytics)
       } catch {
         if (vivo) setData(null)
       } finally {
@@ -57,6 +58,23 @@ export default function InstructorAnalitica() {
     })()
     return () => { vivo = false }
   }, [slug])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportarInstructorPDF()
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'dashboard-instructor.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      // ignore
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const m = data?.metricas || {}
   const estudiantes = data?.estudiantes || []
@@ -75,17 +93,28 @@ export default function InstructorAnalitica() {
           <h1 className={styles.pageTitle}>Analíticas del curso</h1>
           <p className={styles.pageDesc}>Progreso, tiempo y desempeño de tus estudiantes</p>
         </div>
-        {!slugParam && cursos.length > 0 && (
-          <select className={styles.select} style={{ width: 'auto', minWidth: 220 }}
-            value={slug} onChange={(e) => setSlug(e.target.value)}>
-            {cursos.map((c) => <option key={c.slug} value={c.slug}>{c.titulo}</option>)}
-          </select>
-        )}
-        {slugParam && (
-          <button className={styles.btnGhost} onClick={() => navigate('/instructor/cursos')}>
-            <IconArrowLeft /> Volver
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          {!slugParam && cursos.length > 0 && (
+            <select
+              className={styles.select}
+              style={{ width: 'auto', minWidth: 220 }}
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+            >
+              {cursos.map((c) => (
+                <option key={c.slug} value={c.slug}>{c.titulo}</option>
+              ))}
+            </select>
+          )}
+          <button className={styles.btnGhost} onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Generando…' : 'Exportar PDF'}
           </button>
-        )}
+          {slugParam && (
+            <button className={styles.btnGhost} onClick={() => navigate('/instructor/cursos')}>
+              <IconArrowLeft /> Volver
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -98,16 +127,27 @@ export default function InstructorAnalitica() {
         </div>
       ) : (
         <>
-          {/* Métricas */}
           <div className={styles.statsGrid}>
             <Stat icon={<IconUsers />} cls={styles.statIconBlue} value={m.inscritos} label="Inscritos" />
-            <Stat icon={<IconChart />} cls={styles.statIconIndigo} value={`${Math.round(m.promedio_progreso)}%`} label="Progreso promedio" />
-            <Stat icon={<IconAward />} cls={styles.statIconGreen} value={`${Math.round(m.desempeno_promedio)}%`} label="Desempeño promedio" />
+            <Stat icon={<IconChart />} cls={styles.statIconIndigo} value={`${Math.round(m.promedio_progreso || 0)}%`} label="Progreso promedio" />
+            <Stat icon={<IconAward />} cls={styles.statIconGreen} value={`${Math.round(m.desempeno_promedio || 0)}%`} label="Desempeño promedio" />
             <Stat icon={<IconClock />} cls={styles.statIconAmber} value={fmtTiempo(m.tiempo_total_segundos)} label="Tiempo total" />
           </div>
 
+          {m.pendientes_revision > 0 && (
+            <div className={styles.panel} style={{ marginBottom: '1.25rem' }}>
+              <div className={styles.panelBody} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.9rem', color: '#92400e' }}>
+                  <IconClipboard /> {m.pendientes_revision} intento(s) pendientes de revisión manual
+                </span>
+                <button className={styles.btnPrimary} onClick={() => navigate('/instructor/calificaciones')}>
+                  Ir a calificaciones
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className={styles.twoCol}>
-            {/* Estudiantes */}
             <div className={styles.panel}>
               <div className={styles.panelHead}>
                 <h2 className={styles.panelTitle}>Estudiantes ({estudiantes.length})</h2>
@@ -124,7 +164,11 @@ export default function InstructorAnalitica() {
                   </thead>
                   <tbody>
                     {estudiantes.length === 0 ? (
-                      <tr><td colSpan={4} style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>Sin estudiantes inscritos</td></tr>
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem' }}>
+                          Sin estudiantes inscritos
+                        </td>
+                      </tr>
                     ) : estudiantes.map((e) => (
                       <tr key={e.id}>
                         <td>
@@ -137,8 +181,12 @@ export default function InstructorAnalitica() {
                           </div>
                         </td>
                         <td>
-                          <span className={styles.miniTrack}><span className={styles.miniFill} style={{ width: `${e.progreso_pct}%` }} /></span>
-                          <span style={{ marginLeft: 8, fontSize: '0.8rem', color: '#6b7280' }}>{Math.round(e.progreso_pct)}%</span>
+                          <span className={styles.miniTrack}>
+                            <span className={styles.miniFill} style={{ width: `${e.progreso_pct}%` }} />
+                          </span>
+                          <span style={{ marginLeft: 8, fontSize: '0.8rem', color: '#6b7280' }}>
+                            {Math.round(e.progreso_pct)}%
+                          </span>
                         </td>
                         <td style={{ fontWeight: 600, color: e.desempeno_promedio >= 70 ? '#16a34a' : '#6b7280' }}>
                           {Math.round(e.desempeno_promedio)}%
@@ -151,7 +199,6 @@ export default function InstructorAnalitica() {
               </div>
             </div>
 
-            {/* Evaluaciones */}
             <div className={styles.panel}>
               <div className={styles.panelHead}>
                 <h2 className={styles.panelTitle}>Evaluaciones</h2>
@@ -162,7 +209,9 @@ export default function InstructorAnalitica() {
                     <p className={styles.stateDesc}>Este curso no tiene evaluaciones.</p>
                   </div>
                 ) : evaluaciones.map((ev) => {
-                  const tasa = ev.total_intentos ? Math.round((ev.aprobados / ev.total_intentos) * 100) : 0
+                  const tasa = ev.total_intentos
+                    ? Math.round((ev.aprobados / ev.total_intentos) * 100)
+                    : 0
                   return (
                     <div key={ev.id} style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #f6f7f9' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -173,9 +222,9 @@ export default function InstructorAnalitica() {
                           </span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.78rem', color: '#9ca3af' }}>
+                      <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.78rem', color: '#9ca3af', flexWrap: 'wrap' }}>
                         <span><IconClipboard /> {ev.total_intentos} intentos</span>
-                        <span>Promedio: {Math.round(ev.promedio_puntaje)}%</span>
+                        <span>Promedio: {Math.round(ev.promedio_puntaje || 0)}%</span>
                         <span>Aprobación: {tasa}%</span>
                       </div>
                     </div>

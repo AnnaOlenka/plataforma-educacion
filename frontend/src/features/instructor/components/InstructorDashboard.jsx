@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPanel } from '../services/instructorService'
+import { exportarInstructorPDF } from '../../progreso/services/progresoService'
 import {
-  EstadoBadge, IconBook, IconUsers, IconChart, IconClipboard,
-  IconChevron, IconClock, IconLayers,
+  IconBook, IconUsers, IconChart, IconClipboard,
+  IconChevron, IconLayers,
 } from './instructorUi'
 import styles from './Instructor.module.css'
 
@@ -26,6 +27,7 @@ function tiempoRelativo(fecha) {
 export default function InstructorDashboard() {
   const [panel, setPanel] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -40,6 +42,23 @@ export default function InstructorDashboard() {
     })()
     return () => { vivo = false }
   }, [])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportarInstructorPDF()
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'dashboard-instructor.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      // silencioso
+    } finally {
+      setExporting(false)
+    }
+  }
 
   if (loading) {
     return <div className={styles.page}><div className={styles.stateWrap}><div className={styles.spinner} /></div></div>
@@ -58,14 +77,18 @@ export default function InstructorDashboard() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Panel del instructor</h1>
-          <p className={styles.pageDesc}>Resumen de tus cursos, estudiantes y desempeño</p>
+          <p className={styles.pageDesc}>Contenido, quizzes, calificación y analíticas</p>
         </div>
-        <button className={styles.btnPrimary} onClick={() => navigate('/instructor/cursos')}>
-          <IconBook /> Gestionar cursos
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button className={styles.btnGhost} onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Generando…' : 'Exportar PDF'}
+          </button>
+          <button className={styles.btnPrimary} onClick={() => navigate('/instructor/cursos')}>
+            <IconBook /> Gestionar cursos
+          </button>
+        </div>
       </div>
 
-      {/* Stats */}
       <div className={styles.statsGrid}>
         <StatCard icon={<IconBook />} cls={styles.statIconIndigo} value={cursos.length} label="Cursos creados" />
         <StatCard icon={<IconUsers />} cls={styles.statIconBlue} value={totalEstudiantes} label="Estudiantes inscritos" />
@@ -80,7 +103,6 @@ export default function InstructorDashboard() {
       </div>
 
       <div className={styles.twoCol}>
-        {/* Cursos */}
         <div className={styles.panel}>
           <div className={styles.panelHead}>
             <h2 className={styles.panelTitle}>Mis cursos</h2>
@@ -95,15 +117,20 @@ export default function InstructorDashboard() {
               </div>
             ) : (
               cursos.map((c) => (
-                <div key={c.id} className={styles.activityRow} style={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/instructor/cursos/${c.slug}/editar`)}>
+                <div
+                  key={c.id}
+                  className={styles.activityRow}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/instructor/cursos/${c.slug}/editar`)}
+                >
                   <span className={styles.activityAvatar}><IconBook /></span>
                   <div className={styles.activityText}>
                     <strong>{c.titulo}</strong>
-                    <div style={{ fontSize: '0.76rem', color: '#9ca3af', marginTop: 2, display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ fontSize: '0.76rem', color: '#9ca3af', marginTop: 2, display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                       <span><IconUsers /> {c.inscritos} inscritos</span>
                       <span><IconLayers /> {c.lecciones} lecciones</span>
                       <span>{Math.round(c.promedio_progreso)}% progreso</span>
+                      <span>{c.tiempo_formato || '0s'}</span>
                     </div>
                   </div>
                   <IconChevron />
@@ -113,10 +140,10 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        {/* Actividad reciente */}
         <div className={styles.panel}>
           <div className={styles.panelHead}>
             <h2 className={styles.panelTitle}>Actividad reciente</h2>
+            <button className={styles.btnGhost} onClick={() => navigate('/instructor/analiticas')}>Analíticas</button>
           </div>
           <div className={styles.panelBody}>
             {actividad.length === 0 ? (

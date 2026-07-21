@@ -8,27 +8,182 @@ import styles from './Instructor.module.css'
 let TEMP = 0
 const nuevoTemp = () => ++TEMP
 
-const preguntaVacia = () => ({
+const TIPOS = [
+  { v: 'opcion_multiple', l: 'Opción múltiple' },
+  { v: 'verdadero_falso', l: 'Verdadero / Falso' },
+  { v: 'canvas_hotspot', l: 'Canvas · Hotspot' },
+  { v: 'canvas_arrastrar', l: 'Canvas · Arrastrar' },
+  { v: 'canvas_dibujo', l: 'Canvas · Dibujo (manual)' },
+]
+
+const preguntaVacia = (tipo = 'opcion_multiple') => ({
   tempId: nuevoTemp(),
-  tipo: 'opcion_multiple',
+  tipo,
   enunciado: '',
   puntaje: 10,
   opciones: ['', ''],
   correctaIndex: 0,
   correctaBool: true,
+  hotspotId: 'a',
+  hotspots: [
+    { id: 'a', x: 160, y: 180, r: 36, label: 'Zona A' },
+    { id: 'b', x: 320, y: 160, r: 36, label: 'Zona B' },
+  ],
+  items: [
+    { id: 'item1', label: 'Ítem 1', x: 40, y: 40 },
+    { id: 'item2', label: 'Ítem 2', x: 40, y: 100 },
+  ],
+  targets: [
+    { id: 't1', label: 'Destino 1', x: 360, y: 40, w: 160, h: 48 },
+    { id: 't2', label: 'Destino 2', x: 360, y: 100, w: 160, h: 48 },
+  ],
+  asignaciones: { item1: 't1', item2: 't2' },
+  feedback_ok: 'Correcto',
+  feedback_fail: 'Incorrecto, inténtalo de nuevo',
 })
+
+function fromApi(p) {
+  const base = {
+    tempId: nuevoTemp(),
+    tipo: p.tipo,
+    enunciado: p.enunciado || '',
+    puntaje: p.puntaje || 10,
+    opciones: ['', ''],
+    correctaIndex: 0,
+    correctaBool: true,
+    hotspotId: 'a',
+    hotspots: [
+      { id: 'a', x: 160, y: 180, r: 36, label: 'Zona A' },
+      { id: 'b', x: 320, y: 160, r: 36, label: 'Zona B' },
+    ],
+    items: [
+      { id: 'item1', label: 'Ítem 1', x: 40, y: 40 },
+      { id: 'item2', label: 'Ítem 2', x: 40, y: 100 },
+    ],
+    targets: [
+      { id: 't1', label: 'Destino 1', x: 360, y: 40, w: 160, h: 48 },
+      { id: 't2', label: 'Destino 2', x: 360, y: 100, w: 160, h: 48 },
+    ],
+    asignaciones: {},
+    feedback_ok: p.canvas_config?.feedback_ok || 'Correcto',
+    feedback_fail: p.canvas_config?.feedback_fail || 'Incorrecto',
+  }
+
+  if (p.tipo === 'opcion_multiple') {
+    const valor = p.respuesta_correcta?.valor
+    const opciones = p.opciones?.length ? p.opciones.map(String) : ['', '']
+    return {
+      ...base,
+      opciones,
+      correctaIndex: Math.max(0, opciones.findIndex((o) => String(o) === String(valor))),
+    }
+  }
+  if (p.tipo === 'verdadero_falso') {
+    return { ...base, correctaBool: p.respuesta_correcta?.valor === true }
+  }
+  if (p.tipo === 'canvas_hotspot') {
+    const hotspots = p.canvas_config?.hotspots?.length
+      ? p.canvas_config.hotspots
+      : base.hotspots
+    return {
+      ...base,
+      hotspots,
+      hotspotId: p.respuesta_correcta?.hotspot_id || hotspots[0]?.id || 'a',
+    }
+  }
+  if (p.tipo === 'canvas_arrastrar') {
+    const items = p.canvas_config?.items?.length ? p.canvas_config.items : base.items
+    const targets = p.canvas_config?.targets?.length ? p.canvas_config.targets : base.targets
+    return {
+      ...base,
+      items,
+      targets,
+      asignaciones: p.respuesta_correcta?.asignaciones || {},
+    }
+  }
+  return base
+}
+
+function toApi(p, orden) {
+  if (p.tipo === 'opcion_multiple') {
+    const opciones = p.opciones.filter((o) => o.trim())
+    return {
+      enunciado: p.enunciado,
+      tipo: 'opcion_multiple',
+      orden,
+      puntaje: Number(p.puntaje) || 1,
+      opciones,
+      respuesta_correcta: { valor: p.opciones[p.correctaIndex] },
+      canvas_config: {},
+    }
+  }
+  if (p.tipo === 'verdadero_falso') {
+    return {
+      enunciado: p.enunciado,
+      tipo: 'verdadero_falso',
+      orden,
+      puntaje: Number(p.puntaje) || 1,
+      opciones: [true, false],
+      respuesta_correcta: { valor: p.correctaBool },
+      canvas_config: {},
+    }
+  }
+  if (p.tipo === 'canvas_hotspot') {
+    return {
+      enunciado: p.enunciado,
+      tipo: 'canvas_hotspot',
+      orden,
+      puntaje: Number(p.puntaje) || 1,
+      opciones: [],
+      respuesta_correcta: { hotspot_id: p.hotspotId },
+      canvas_config: {
+        hotspots: p.hotspots,
+        feedback_ok: p.feedback_ok,
+        feedback_fail: p.feedback_fail,
+      },
+    }
+  }
+  if (p.tipo === 'canvas_arrastrar') {
+    return {
+      enunciado: p.enunciado,
+      tipo: 'canvas_arrastrar',
+      orden,
+      puntaje: Number(p.puntaje) || 1,
+      opciones: [],
+      respuesta_correcta: { asignaciones: p.asignaciones },
+      canvas_config: {
+        items: p.items,
+        targets: p.targets,
+        feedback_ok: p.feedback_ok,
+        feedback_fail: p.feedback_fail,
+      },
+    }
+  }
+  // canvas_dibujo → calificación manual
+  return {
+    enunciado: p.enunciado,
+    tipo: 'canvas_dibujo',
+    orden,
+    puntaje: Number(p.puntaje) || 1,
+    opciones: [],
+    respuesta_correcta: {},
+    canvas_config: {
+      feedback_ok: p.feedback_ok,
+      feedback_fail: p.feedback_fail,
+      requiere_revision: true,
+    },
+  }
+}
 
 export default function QuizBuilder({ leccion, onClose, onSaved }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [evaluacionId, setEvaluacionId] = useState(null)
-
   const [titulo, setTitulo] = useState('')
   const [minutos, setMinutos] = useState(10)
   const [aprobacion, setAprobacion] = useState(70)
   const [preguntas, setPreguntas] = useState([])
-  const [canvasPreservadas, setCanvasPreservadas] = useState([]) // preguntas Canvas intactas
 
   useEffect(() => {
     let vivo = true
@@ -42,29 +197,8 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
           setTitulo(ev.titulo)
           setMinutos(Math.round((ev.tiempo_limite_seg || 600) / 60))
           setAprobacion(ev.puntaje_aprobacion)
-          const simples = []
-          const canvas = []
-          ;(ev.preguntas || []).forEach((p) => {
-            if (p.tipo === 'opcion_multiple') {
-              const valor = p.respuesta_correcta?.valor
-              simples.push({
-                tempId: nuevoTemp(), tipo: 'opcion_multiple', enunciado: p.enunciado,
-                puntaje: p.puntaje, opciones: p.opciones?.length ? p.opciones.map(String) : ['', ''],
-                correctaIndex: Math.max(0, (p.opciones || []).findIndex((o) => String(o) === String(valor))),
-                correctaBool: true,
-              })
-            } else if (p.tipo === 'verdadero_falso') {
-              simples.push({
-                tempId: nuevoTemp(), tipo: 'verdadero_falso', enunciado: p.enunciado,
-                puntaje: p.puntaje, opciones: ['', ''], correctaIndex: 0,
-                correctaBool: p.respuesta_correcta?.valor === true,
-              })
-            } else {
-              canvas.push({ ...p, orden: p.orden })
-            }
-          })
-          setPreguntas(simples.length ? simples : [preguntaVacia()])
-          setCanvasPreservadas(canvas)
+          const list = (ev.preguntas || []).map(fromApi)
+          setPreguntas(list.length ? list : [preguntaVacia()])
         } else {
           setTitulo(leccion.titulo || 'Nueva evaluación')
           setPreguntas([preguntaVacia()])
@@ -81,7 +215,7 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
   const setPreg = (tempId, patch) =>
     setPreguntas((prev) => prev.map((p) => (p.tempId === tempId ? { ...p, ...patch } : p)))
 
-  const addPregunta = () => setPreguntas((prev) => [...prev, preguntaVacia()])
+  const addPregunta = (tipo) => setPreguntas((prev) => [...prev, preguntaVacia(tipo)])
   const delPregunta = (tempId) => setPreguntas((prev) => prev.filter((p) => p.tempId !== tempId))
 
   const setOpcion = (tempId, idx, valor) =>
@@ -107,8 +241,15 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
       if (!p.enunciado.trim()) return 'Todas las preguntas necesitan enunciado.'
       if (p.tipo === 'opcion_multiple') {
         const validas = p.opciones.filter((o) => o.trim())
-        if (validas.length < 2) return 'Las preguntas de opción múltiple necesitan al menos 2 opciones.'
+        if (validas.length < 2) return 'Las de opción múltiple necesitan ≥ 2 opciones.'
         if (!p.opciones[p.correctaIndex]?.trim()) return 'Marca una opción correcta válida.'
+      }
+      if (p.tipo === 'canvas_hotspot') {
+        if (!p.hotspots?.length) return 'Hotspot: define al menos una zona.'
+        if (!p.hotspots.some((h) => h.id === p.hotspotId)) return 'Hotspot: elige la zona correcta.'
+      }
+      if (p.tipo === 'canvas_arrastrar') {
+        if (!p.items?.length || !p.targets?.length) return 'Arrastrar: define ítems y destinos.'
       }
     }
     return ''
@@ -120,38 +261,17 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
     setError('')
     setSaving(true)
     try {
-      const preguntasPayload = []
-      let orden = 1
-      preguntas.forEach((p) => {
-        if (p.tipo === 'opcion_multiple') {
-          const opciones = p.opciones.filter((o) => o.trim())
-          preguntasPayload.push({
-            enunciado: p.enunciado, tipo: 'opcion_multiple', orden: orden++,
-            puntaje: Number(p.puntaje) || 1, opciones,
-            respuesta_correcta: { valor: p.opciones[p.correctaIndex] }, canvas_config: {},
-          })
-        } else {
-          preguntasPayload.push({
-            enunciado: p.enunciado, tipo: 'verdadero_falso', orden: orden++,
-            puntaje: Number(p.puntaje) || 1, opciones: [true, false],
-            respuesta_correcta: { valor: p.correctaBool }, canvas_config: {},
-          })
-        }
-      })
-      // Preserva preguntas Canvas existentes
-      canvasPreservadas.forEach((p) => {
-        preguntasPayload.push({
-          enunciado: p.enunciado, tipo: p.tipo, orden: orden++,
-          puntaje: p.puntaje, opciones: p.opciones || [],
-          respuesta_correcta: p.respuesta_correcta || {}, canvas_config: p.canvas_config || {},
-        })
-      })
-
+      const preguntasPayload = preguntas.map((p, i) => toApi(p, i + 1))
       const payload = {
         leccion: leccion.id,
         titulo,
         tiempo_limite_seg: Math.max(60, Number(minutos) * 60),
         puntaje_aprobacion: Number(aprobacion),
+        canvas_schema: {
+          width: 640,
+          height: 360,
+          background: '#0f172a',
+        },
         preguntas: preguntasPayload,
       }
       if (evaluacionId) await editarEvaluacion(evaluacionId, payload)
@@ -166,7 +286,6 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
   }
 
   const totalPuntos = preguntas.reduce((s, p) => s + (Number(p.puntaje) || 0), 0)
-    + canvasPreservadas.reduce((s, p) => s + (p.puntaje || 0), 0)
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -200,14 +319,22 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.5rem 0 0.75rem' }}>
-                <span className={styles.label}>Preguntas ({preguntas.length + canvasPreservadas.length})</span>
-                <span className={styles.hint}>Total: {totalPuntos} pts</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.5rem 0 0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <span className={styles.label}>Preguntas ({preguntas.length}) · {totalPuntos} pts</span>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {TIPOS.map((t) => (
+                    <button key={t.v} type="button" className={styles.btnGhost} onClick={() => addPregunta(t.v)}>
+                      <IconPlus /> {t.l}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {preguntas.map((p, idx) => (
                 <PreguntaEditor
-                  key={p.tempId} pregunta={p} index={idx}
+                  key={p.tempId}
+                  pregunta={p}
+                  index={idx}
                   onChange={(patch) => setPreg(p.tempId, patch)}
                   onDelete={() => delPregunta(p.tempId)}
                   onOpcion={(i, v) => setOpcion(p.tempId, i, v)}
@@ -216,25 +343,6 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
                   canDelete={preguntas.length > 1}
                 />
               ))}
-
-              {canvasPreservadas.map((p, i) => (
-                <div key={`c${i}`} className={styles.moduloCard} style={{ marginBottom: '0.75rem' }}>
-                  <div className={styles.leccionRow}>
-                    <span className={styles.leccionIcon}><IconQuiz /></span>
-                    <div className={styles.leccionInfo}>
-                      <div className={styles.leccionTitulo}>{p.enunciado}</div>
-                      <div className={styles.leccionSub}>
-                        <span className={styles.leccionTag}>Canvas · {p.tipo === 'canvas_hotspot' ? 'Seleccionar' : 'Arrastrar'}</span>
-                        <span>{p.puntaje} pts · se conserva</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <button className={styles.addModuloBtn} onClick={addPregunta} style={{ marginTop: '0.5rem' }}>
-                <IconPlus /> Agregar pregunta
-              </button>
             </>
           )}
         </div>
@@ -255,15 +363,14 @@ function PreguntaEditor({ pregunta: p, index, onChange, onDelete, onOpcion, onAd
     <div className={styles.moduloCard} style={{ marginBottom: '0.85rem' }}>
       <div className={styles.moduloHead}>
         <span className={styles.moduloNum}>{index + 1}</span>
-        <select className={styles.select} style={{ width: 'auto', flex: 1, maxWidth: 220, height: 34 }}
+        <select className={styles.select} style={{ width: 'auto', flex: 1, maxWidth: 240, height: 34 }}
           value={p.tipo} onChange={(e) => onChange({ tipo: e.target.value })}>
-          <option value="opcion_multiple">Opción múltiple</option>
-          <option value="verdadero_falso">Verdadero / Falso</option>
+          {TIPOS.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
         </select>
         <input type="number" min="1" className={styles.input} style={{ width: 90, height: 34 }}
           value={p.puntaje} onChange={(e) => onChange({ puntaje: e.target.value })} title="Puntaje" />
         {canDelete && (
-          <button className={`${styles.btnIcon} ${styles.btnIconDanger}`} onClick={onDelete} title="Eliminar pregunta"><IconTrash /></button>
+          <button className={`${styles.btnIcon} ${styles.btnIconDanger}`} onClick={onDelete} title="Eliminar"><IconTrash /></button>
         )}
       </div>
 
@@ -274,7 +381,7 @@ function PreguntaEditor({ pregunta: p, index, onChange, onDelete, onOpcion, onAd
             value={p.enunciado} onChange={(e) => onChange({ enunciado: e.target.value })} />
         </div>
 
-        {p.tipo === 'opcion_multiple' ? (
+        {p.tipo === 'opcion_multiple' && (
           <div className={styles.field}>
             <label className={styles.label}>Opciones (marca la correcta)</label>
             {p.opciones.map((op, i) => (
@@ -292,18 +399,149 @@ function PreguntaEditor({ pregunta: p, index, onChange, onDelete, onOpcion, onAd
               <IconPlus /> Añadir opción
             </button>
           </div>
-        ) : (
+        )}
+
+        {p.tipo === 'verdadero_falso' && (
           <div className={styles.field}>
             <label className={styles.label}>Respuesta correcta</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className={`${styles.tipoChip} ${p.correctaBool ? styles.tipoChipActive : ''}`}
+              <button type="button" className={`${styles.tipoChip} ${p.correctaBool ? styles.tipoChipActive : ''}`}
                 onClick={() => onChange({ correctaBool: true })}>Verdadero</button>
-              <button className={`${styles.tipoChip} ${!p.correctaBool ? styles.tipoChipActive : ''}`}
+              <button type="button" className={`${styles.tipoChip} ${!p.correctaBool ? styles.tipoChipActive : ''}`}
                 onClick={() => onChange({ correctaBool: false })}>Falso</button>
             </div>
           </div>
         )}
+
+        {p.tipo === 'canvas_hotspot' && (
+          <HotspotEditor pregunta={p} onChange={onChange} />
+        )}
+
+        {p.tipo === 'canvas_arrastrar' && (
+          <ArrastrarEditor pregunta={p} onChange={onChange} />
+        )}
+
+        {p.tipo === 'canvas_dibujo' && (
+          <div className={styles.field}>
+            <p className={styles.hint}>
+              El estudiante dibuja en el lienzo. Queda en <strong>pendiente de revisión</strong> para calificación manual.
+            </p>
+            <label className={styles.label}>Feedback al revisar</label>
+            <input className={styles.input} value={p.feedback_ok}
+              onChange={(e) => onChange({ feedback_ok: e.target.value })} placeholder="Comentario sugerido" />
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function HotspotEditor({ pregunta: p, onChange }) {
+  const updateHs = (idx, patch) => {
+    const hotspots = p.hotspots.map((h, i) => (i === idx ? { ...h, ...patch } : h))
+    onChange({ hotspots })
+  }
+  const addHs = () => {
+    const id = String.fromCharCode(97 + p.hotspots.length)
+    onChange({
+      hotspots: [...p.hotspots, { id, x: 100 + p.hotspots.length * 80, y: 180, r: 36, label: `Zona ${id.toUpperCase()}` }],
+    })
+  }
+  const delHs = (idx) => {
+    const hotspots = p.hotspots.filter((_, i) => i !== idx)
+    onChange({
+      hotspots,
+      hotspotId: hotspots.some((h) => h.id === p.hotspotId) ? p.hotspotId : hotspots[0]?.id,
+    })
+  }
+
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>Zonas clicables (x, y, radio)</label>
+      {p.hotspots.map((h, i) => (
+        <div key={h.id} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 70px auto auto', gap: '0.4rem', marginBottom: '0.45rem', alignItems: 'center' }}>
+          <input className={styles.input} value={h.label} onChange={(e) => updateHs(i, { label: e.target.value })} placeholder="Etiqueta" />
+          <input type="number" className={styles.input} value={h.x} onChange={(e) => updateHs(i, { x: Number(e.target.value) })} title="X" />
+          <input type="number" className={styles.input} value={h.y} onChange={(e) => updateHs(i, { y: Number(e.target.value) })} title="Y" />
+          <input type="number" className={styles.input} value={h.r} onChange={(e) => updateHs(i, { r: Number(e.target.value) })} title="Radio" />
+          <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+            <input type="radio" name={`hs-${p.tempId}`} checked={p.hotspotId === h.id}
+              onChange={() => onChange({ hotspotId: h.id })} /> OK
+          </label>
+          {p.hotspots.length > 1 && (
+            <button type="button" className={`${styles.btnIcon} ${styles.btnIconDanger}`} onClick={() => delHs(i)}><IconTrash /></button>
+          )}
+        </div>
+      ))}
+      <button type="button" className={styles.btnGhost} onClick={addHs} style={{ width: 'fit-content' }}>
+        <IconPlus /> Zona
+      </button>
+      <div className={styles.fieldRow} style={{ marginTop: '0.75rem' }}>
+        <div className={styles.field}>
+          <label className={styles.label}>Feedback correcto</label>
+          <input className={styles.input} value={p.feedback_ok} onChange={(e) => onChange({ feedback_ok: e.target.value })} />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Feedback incorrecto</label>
+          <input className={styles.input} value={p.feedback_fail} onChange={(e) => onChange({ feedback_fail: e.target.value })} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ArrastrarEditor({ pregunta: p, onChange }) {
+  const updateItem = (idx, patch) => {
+    const items = p.items.map((it, i) => (i === idx ? { ...it, ...patch } : it))
+    onChange({ items })
+  }
+  const updateTarget = (idx, patch) => {
+    const targets = p.targets.map((t, i) => (i === idx ? { ...t, ...patch } : t))
+    onChange({ targets })
+  }
+  const setAsig = (itemId, targetId) => {
+    onChange({ asignaciones: { ...p.asignaciones, [itemId]: targetId } })
+  }
+
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>Ítems arrastrables</label>
+      {p.items.map((it, i) => (
+        <div key={it.id} style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
+          <input className={styles.input} value={it.label}
+            onChange={(e) => updateItem(i, { label: e.target.value })} />
+          <select className={styles.select} style={{ width: 160 }}
+            value={p.asignaciones[it.id] || ''}
+            onChange={(e) => setAsig(it.id, e.target.value)}>
+            <option value="">→ destino…</option>
+            {p.targets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+          </select>
+        </div>
+      ))}
+      <button type="button" className={styles.btnGhost} style={{ width: 'fit-content', marginBottom: '0.75rem' }}
+        onClick={() => {
+          const id = `item${p.items.length + 1}`
+          onChange({ items: [...p.items, { id, label: `Ítem ${p.items.length + 1}`, x: 40, y: 40 + p.items.length * 50 }] })
+        }}>
+        <IconPlus /> Ítem
+      </button>
+
+      <label className={styles.label}>Destinos</label>
+      {p.targets.map((t, i) => (
+        <div key={t.id} style={{ marginBottom: '0.4rem' }}>
+          <input className={styles.input} value={t.label}
+            onChange={(e) => updateTarget(i, { label: e.target.value })} />
+        </div>
+      ))}
+      <button type="button" className={styles.btnGhost} style={{ width: 'fit-content' }}
+        onClick={() => {
+          const id = `t${p.targets.length + 1}`
+          onChange({
+            targets: [...p.targets, { id, label: `Destino ${p.targets.length + 1}`, x: 360, y: 40 + p.targets.length * 60, w: 160, h: 48 }],
+          })
+        }}>
+        <IconPlus /> Destino
+      </button>
     </div>
   )
 }

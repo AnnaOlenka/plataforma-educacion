@@ -21,13 +21,26 @@ def metricas_estudiante(user, curso=None) -> dict:
 
     progresos = ProgresoLeccion.objects.filter(estudiante=user)
     intentos = IntentoEvaluacion.objects.filter(
-        estudiante=user, estado=IntentoEvaluacion.Estado.FINALIZADO
+        estudiante=user,
+        estado__in=[
+            IntentoEvaluacion.Estado.FINALIZADO,
+            IntentoEvaluacion.Estado.REVISADO,
+        ],
+    )
+    intentos_lista = IntentoEvaluacion.objects.filter(
+        estudiante=user,
+        estado__in=[
+            IntentoEvaluacion.Estado.FINALIZADO,
+            IntentoEvaluacion.Estado.REVISADO,
+            IntentoEvaluacion.Estado.PENDIENTE_REVISION,
+        ],
     )
     lecciones = Leccion.objects.filter(es_obligatoria=True)
 
     if curso is not None:
         progresos = progresos.filter(leccion__modulo__curso=curso)
         intentos = intentos.filter(evaluacion__leccion__modulo__curso=curso)
+        intentos_lista = intentos_lista.filter(evaluacion__leccion__modulo__curso=curso)
         lecciones = lecciones.filter(modulo__curso=curso)
 
     total_lecciones = lecciones.count()
@@ -112,6 +125,36 @@ def metricas_estudiante(user, curso=None) -> dict:
             }
         )
 
+    evaluaciones_recientes = list(
+        intentos_lista.select_related(
+            "evaluacion", "evaluacion__leccion__modulo__curso"
+        )
+        .order_by("-finalizado_en", "-iniciado_en")[:15]
+        .values(
+            "id",
+            "puntaje",
+            "aprobado",
+            "finalizado_en",
+            "estado",
+            "evaluacion__titulo",
+            "evaluacion__leccion__modulo__curso__titulo",
+            "evaluacion__leccion__modulo__curso__slug",
+        )
+    )
+    evaluaciones = [
+        {
+            "id": e["id"],
+            "evaluacion_titulo": e["evaluacion__titulo"],
+            "curso_titulo": e["evaluacion__leccion__modulo__curso__titulo"],
+            "curso_slug": e["evaluacion__leccion__modulo__curso__slug"],
+            "puntaje": float(e["puntaje"] or 0),
+            "aprobado": e["aprobado"],
+            "estado": e["estado"],
+            "finalizado_en": e["finalizado_en"],
+        }
+        for e in evaluaciones_recientes
+    ]
+
     return {
         "estudiante": {
             "id": user.id,
@@ -136,6 +179,7 @@ def metricas_estudiante(user, curso=None) -> dict:
             ).count(),
         },
         "cursos": cursos_detalle,
+        "evaluaciones": evaluaciones,
     }
 
 
