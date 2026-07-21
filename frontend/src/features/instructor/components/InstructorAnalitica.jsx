@@ -212,20 +212,30 @@ export default function InstructorAnalitica() {
                   const tasa = ev.total_intentos
                     ? Math.round((ev.aprobados / ev.total_intentos) * 100)
                     : 0
+                  const promedio = Math.round(ev.promedio_puntaje || 0)
                   return (
-                    <div key={ev.id} style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #f6f7f9' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600, color: '#111827', fontSize: '0.86rem' }}>{ev.titulo}</span>
+                    <div key={ev.id} style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 700, color: '#111827', fontSize: '0.88rem' }}>{ev.titulo}</span>
                         {ev.pendientes_revision > 0 && (
                           <span className={styles.estadoBadge} style={{ background: '#fffbeb', color: '#d97706' }}>
                             {ev.pendientes_revision} por revisar
                           </span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.78rem', color: '#9ca3af', flexWrap: 'wrap' }}>
-                        <span><IconClipboard /> {ev.total_intentos} intentos</span>
-                        <span>Promedio: {Math.round(ev.promedio_puntaje || 0)}%</span>
-                        <span>Aprobación: {tasa}%</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                        <div style={{ background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                          <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginBottom: 2 }}>Intentos</div>
+                          <div style={{ fontWeight: 700, color: '#111827', fontSize: '0.95rem' }}>{ev.total_intentos}</div>
+                        </div>
+                        <div style={{ background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                          <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginBottom: 2 }}>Promedio</div>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: promedio >= 70 ? '#16a34a' : promedio >= 50 ? '#d97706' : '#dc2626' }}>{promedio}%</div>
+                        </div>
+                        <div style={{ background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                          <div style={{ fontSize: '0.7rem', color: '#9ca3af', marginBottom: 2 }}>Aprobación</div>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: tasa >= 70 ? '#16a34a' : tasa >= 50 ? '#d97706' : '#dc2626' }}>{tasa}%</div>
+                        </div>
                       </div>
                     </div>
                   )
