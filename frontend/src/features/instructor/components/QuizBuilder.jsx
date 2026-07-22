@@ -3,6 +3,7 @@ import {
   getEvaluaciones, crearEvaluacion, editarEvaluacion, unwrap,
 } from '../services/instructorService'
 import { IconX, IconPlus, IconTrash, IconQuiz, IconCheck } from './instructorUi'
+import CanvasPreguntaEditor, { CANVAS_W, CANVAS_H } from './CanvasPreguntaEditor'
 import styles from './Instructor.module.css'
 
 let TEMP = 0
@@ -268,8 +269,8 @@ export default function QuizBuilder({ leccion, onClose, onSaved }) {
         tiempo_limite_seg: Math.max(60, Number(minutos) * 60),
         puntaje_aprobacion: Number(aprobacion),
         canvas_schema: {
-          width: 640,
-          height: 360,
+          width: CANVAS_W,
+          height: CANVAS_H,
           background: '#0f172a',
         },
         preguntas: preguntasPayload,
@@ -422,11 +423,43 @@ function PreguntaEditor({ pregunta: p, index, onChange, onDelete, onOpcion, onAd
         )}
 
         {p.tipo === 'canvas_hotspot' && (
-          <HotspotEditor pregunta={p} onChange={onChange} />
+          <div className={styles.field}>
+            <label className={styles.label}>Zonas seleccionables</label>
+            <CanvasPreguntaEditor
+              modo="canvas_hotspot"
+              hotspots={p.hotspots}
+              correctaHotspotId={p.hotspotId}
+              onHotspotsChange={(hotspots) => onChange({ hotspots })}
+              onCorrectaHotspotChange={(hotspotId) => onChange({ hotspotId })}
+            />
+            <div className={styles.fieldRow} style={{ marginTop: '0.75rem' }}>
+              <div className={styles.field}>
+                <label className={styles.label}>Feedback correcto</label>
+                <input className={styles.input} value={p.feedback_ok}
+                  onChange={(e) => onChange({ feedback_ok: e.target.value })} />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Feedback incorrecto</label>
+                <input className={styles.input} value={p.feedback_fail}
+                  onChange={(e) => onChange({ feedback_fail: e.target.value })} />
+              </div>
+            </div>
+          </div>
         )}
 
         {p.tipo === 'canvas_arrastrar' && (
-          <ArrastrarEditor pregunta={p} onChange={onChange} />
+          <div className={styles.field}>
+            <label className={styles.label}>Elementos y zonas objetivo</label>
+            <CanvasPreguntaEditor
+              modo="canvas_arrastrar"
+              items={p.items}
+              targets={p.targets}
+              asignaciones={p.asignaciones}
+              onItemsChange={(items) => onChange({ items })}
+              onTargetsChange={(targets) => onChange({ targets })}
+              onAsignacionesChange={(asignaciones) => onChange({ asignaciones })}
+            />
+          </div>
         )}
 
         {p.tipo === 'canvas_dibujo' && (
@@ -444,112 +477,3 @@ function PreguntaEditor({ pregunta: p, index, onChange, onDelete, onOpcion, onAd
   )
 }
 
-function HotspotEditor({ pregunta: p, onChange }) {
-  const updateHs = (idx, patch) => {
-    const hotspots = p.hotspots.map((h, i) => (i === idx ? { ...h, ...patch } : h))
-    onChange({ hotspots })
-  }
-  const addHs = () => {
-    const id = String.fromCharCode(97 + p.hotspots.length)
-    onChange({
-      hotspots: [...p.hotspots, { id, x: 100 + p.hotspots.length * 80, y: 180, r: 36, label: `Zona ${id.toUpperCase()}` }],
-    })
-  }
-  const delHs = (idx) => {
-    const hotspots = p.hotspots.filter((_, i) => i !== idx)
-    onChange({
-      hotspots,
-      hotspotId: hotspots.some((h) => h.id === p.hotspotId) ? p.hotspotId : hotspots[0]?.id,
-    })
-  }
-
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>Zonas clicables (x, y, radio)</label>
-      {p.hotspots.map((h, i) => (
-        <div key={h.id} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 70px auto auto', gap: '0.4rem', marginBottom: '0.45rem', alignItems: 'center' }}>
-          <input className={styles.input} value={h.label} onChange={(e) => updateHs(i, { label: e.target.value })} placeholder="Etiqueta" />
-          <input type="number" className={styles.input} value={h.x} onChange={(e) => updateHs(i, { x: Number(e.target.value) })} title="X" />
-          <input type="number" className={styles.input} value={h.y} onChange={(e) => updateHs(i, { y: Number(e.target.value) })} title="Y" />
-          <input type="number" className={styles.input} value={h.r} onChange={(e) => updateHs(i, { r: Number(e.target.value) })} title="Radio" />
-          <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
-            <input type="radio" name={`hs-${p.tempId}`} checked={p.hotspotId === h.id}
-              onChange={() => onChange({ hotspotId: h.id })} /> OK
-          </label>
-          {p.hotspots.length > 1 && (
-            <button type="button" className={`${styles.btnIcon} ${styles.btnIconDanger}`} onClick={() => delHs(i)}><IconTrash /></button>
-          )}
-        </div>
-      ))}
-      <button type="button" className={styles.btnGhost} onClick={addHs} style={{ width: 'fit-content' }}>
-        <IconPlus /> Zona
-      </button>
-      <div className={styles.fieldRow} style={{ marginTop: '0.75rem' }}>
-        <div className={styles.field}>
-          <label className={styles.label}>Feedback correcto</label>
-          <input className={styles.input} value={p.feedback_ok} onChange={(e) => onChange({ feedback_ok: e.target.value })} />
-        </div>
-        <div className={styles.field}>
-          <label className={styles.label}>Feedback incorrecto</label>
-          <input className={styles.input} value={p.feedback_fail} onChange={(e) => onChange({ feedback_fail: e.target.value })} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ArrastrarEditor({ pregunta: p, onChange }) {
-  const updateItem = (idx, patch) => {
-    const items = p.items.map((it, i) => (i === idx ? { ...it, ...patch } : it))
-    onChange({ items })
-  }
-  const updateTarget = (idx, patch) => {
-    const targets = p.targets.map((t, i) => (i === idx ? { ...t, ...patch } : t))
-    onChange({ targets })
-  }
-  const setAsig = (itemId, targetId) => {
-    onChange({ asignaciones: { ...p.asignaciones, [itemId]: targetId } })
-  }
-
-  return (
-    <div className={styles.field}>
-      <label className={styles.label}>Ítems arrastrables</label>
-      {p.items.map((it, i) => (
-        <div key={it.id} style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
-          <input className={styles.input} value={it.label}
-            onChange={(e) => updateItem(i, { label: e.target.value })} />
-          <select className={styles.select} style={{ width: 160 }}
-            value={p.asignaciones[it.id] || ''}
-            onChange={(e) => setAsig(it.id, e.target.value)}>
-            <option value="">→ destino…</option>
-            {p.targets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-        </div>
-      ))}
-      <button type="button" className={styles.btnGhost} style={{ width: 'fit-content', marginBottom: '0.75rem' }}
-        onClick={() => {
-          const id = `item${p.items.length + 1}`
-          onChange({ items: [...p.items, { id, label: `Ítem ${p.items.length + 1}`, x: 40, y: 40 + p.items.length * 50 }] })
-        }}>
-        <IconPlus /> Ítem
-      </button>
-
-      <label className={styles.label}>Destinos</label>
-      {p.targets.map((t, i) => (
-        <div key={t.id} style={{ marginBottom: '0.4rem' }}>
-          <input className={styles.input} value={t.label}
-            onChange={(e) => updateTarget(i, { label: e.target.value })} />
-        </div>
-      ))}
-      <button type="button" className={styles.btnGhost} style={{ width: 'fit-content' }}
-        onClick={() => {
-          const id = `t${p.targets.length + 1}`
-          onChange({
-            targets: [...p.targets, { id, label: `Destino ${p.targets.length + 1}`, x: 360, y: 40 + p.targets.length * 60, w: 160, h: 48 }],
-          })
-        }}>
-        <IconPlus /> Destino
-      </button>
-    </div>
-  )
-}
