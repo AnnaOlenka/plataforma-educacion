@@ -18,5 +18,9 @@ export const getMe = () =>
 export const updateMe = (data) =>
   api.patch('/api/auth/me/', data)
 
-export const changePassword = (old_password, new_password, new_password_confirm) =>
-  api.post('/api/auth/change-password/', { old_password, new_password, new_password_confirm })
+export const changePassword = (current_password, new_password, new_password_confirm) =>
+  api.post('/api/auth/change-password/', {
+    current_password,
+    new_password,
+    new_password_confirm,
+  })

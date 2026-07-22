@@ -56,16 +56,36 @@ export default function UserProfile() {
     }
   }
 
+  const formatApiErrors = (data) => {
+    if (!data) return 'Error al cambiar contraseña'
+    if (typeof data === 'string') return data
+    if (Array.isArray(data)) return data.join(' ')
+    const parts = []
+    for (const [key, val] of Object.entries(data)) {
+      const msg = Array.isArray(val) ? val.join(' ') : String(val)
+      if (key === 'detail' || key === 'non_field_errors') parts.push(msg)
+      else parts.push(msg)
+      // Muestra errores por campo en el formulario
+      if (['current_password', 'new_password', 'new_password_confirm'].includes(key)) {
+        passForm.setError(key, { type: 'server', message: msg })
+      }
+    }
+    return parts.join(' ') || 'Error al cambiar contraseña'
+  }
+
   const onChangePass = async (values) => {
     setPassError('')
     setSavingPass(true)
     try {
-      await changePassword(values.old_password, values.new_password, values.new_password_confirm)
+      await changePassword(
+        values.current_password,
+        values.new_password,
+        values.new_password_confirm
+      )
       passForm.reset()
       notify('Contraseña actualizada correctamente')
     } catch (err) {
-      const d = err.response?.data
-      setPassError(typeof d === 'string' ? d : Object.values(d || {}).flat().join(' ') || 'Error al cambiar contraseña')
+      setPassError(formatApiErrors(err.response?.data))
     } finally {
       setSavingPass(false)
     }
@@ -163,12 +183,14 @@ export default function UserProfile() {
             <div className={styles.field}>
               <label className={styles.label}>Contraseña actual</label>
               <input type="password" className={styles.input} placeholder="Tu contraseña actual"
-                {...passForm.register('old_password', { required: 'Requerido' })} />
-              {passForm.formState.errors.old_password && <span className={styles.errorMsg}>{passForm.formState.errors.old_password.message}</span>}
+                autoComplete="current-password"
+                {...passForm.register('current_password', { required: 'Requerido' })} />
+              {passForm.formState.errors.current_password && <span className={styles.errorMsg}>{passForm.formState.errors.current_password.message}</span>}
             </div>
             <div className={styles.field}>
               <label className={styles.label}>Nueva contraseña</label>
               <input type="password" className={styles.input} placeholder="Mínimo 8 caracteres"
+                autoComplete="new-password"
                 {...passForm.register('new_password', {
                   required: 'Requerido',
                   minLength: { value: 8, message: 'Mínimo 8 caracteres' }
@@ -178,6 +200,7 @@ export default function UserProfile() {
             <div className={styles.field}>
               <label className={styles.label}>Confirmar nueva contraseña</label>
               <input type="password" className={styles.input} placeholder="Repite la nueva contraseña"
+                autoComplete="new-password"
                 {...passForm.register('new_password_confirm', {
                   required: 'Requerido',
                   validate: (v) => v === newPass || 'Las contraseñas no coinciden'
