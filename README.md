@@ -55,7 +55,7 @@ Documentación OpenAPI:
 
 ### Usuarios demo (`seed_demo`)
 
-- Admin: `admin` / `admin123`
-- Instructor: `instructor` / `instructor123`
-- Estudiante: `estudiante` / `estudiante123`
+- Admin: `admin@edupath.local` / `admin123`
+- Instructor: `instructor@edupath.local` / `instructor123`
+- Estudiante: `estudiante@edupath.local` / `estudiante123`
 - Curso: `introduccion-web`
