@@ -11,49 +11,8 @@ class Command(BaseCommand):
     help = "Carga datos demo: instructor, curso, módulos, lección quiz Canvas"
 
     def handle(self, *args, **options):
-        admin, created = Usuario.objects.get_or_create(
-            username="admin",
-            defaults={
-                "email": "admin@edupath.local",
-                "rol": Usuario.Rol.ADMIN,
-                "first_name": "Admin",
-                "last_name": "EduPath",
-                "is_staff": True,
-                "is_superuser": True,
-            },
-        )
-        if created:
-            admin.set_password("admin123")
-            admin.save()
-
-        instructor, created = Usuario.objects.get_or_create(
-            username="instructor",
-            defaults={
-                "email": "instructor@edupath.local",
-                "rol": Usuario.Rol.INSTRUCTOR,
-                "first_name": "Inés",
-                "last_name": "Torres",
-                "is_staff": True,
-            },
-        )
-        if created:
-            instructor.set_password("instructor123")
-            instructor.save()
-
-        estudiante, created = Usuario.objects.get_or_create(
-            username="estudiante",
-            defaults={
-                "email": "estudiante@edupath.local",
-                "rol": Usuario.Rol.ESTUDIANTE,
-                "first_name": "Esteban",
-                "last_name": "Vega",
-            },
-        )
-        if created:
-            estudiante.set_password("estudiante123")
-            estudiante.save()
-
-        admin_user, created = Usuario.objects.get_or_create(
+        # 1. Crear/Actualizar Usuarios (Consolidado)
+        admin, created = Usuario.objects.update_or_create(
             username="admin",
             defaults={
                 "email": "admin@edupath.local",
@@ -64,16 +23,39 @@ class Command(BaseCommand):
                 "is_superuser": True,
             },
         )
-        if created:
-            admin_user.set_password("admin123")
-            admin_user.save()
-        elif admin_user.rol != Usuario.Rol.ADMIN:
-            admin_user.rol = Usuario.Rol.ADMIN
-            admin_user.is_staff = True
-            admin_user.is_superuser = True
-            admin_user.save(update_fields=["rol", "is_staff", "is_superuser"])
+        if created or not admin.check_password("admin123"):
+            admin.set_password("admin123")
+            admin.save()
 
-        curso, _ = Curso.objects.get_or_create(
+        instructor, created = Usuario.objects.update_or_create(
+            username="instructor",
+            defaults={
+                "email": "instructor@edupath.local",
+                "rol": Usuario.Rol.INSTRUCTOR,
+                "first_name": "Inés",
+                "last_name": "Torres",
+                "is_staff": True,
+            },
+        )
+        if created or not instructor.check_password("instructor123"):
+            instructor.set_password("instructor123")
+            instructor.save()
+
+        estudiante, created = Usuario.objects.update_or_create(
+            username="estudiante",
+            defaults={
+                "email": "estudiante@edupath.local",
+                "rol": Usuario.Rol.ESTUDIANTE,
+                "first_name": "Esteban",
+                "last_name": "Vega",
+            },
+        )
+        if created or not estudiante.check_password("estudiante123"):
+            estudiante.set_password("estudiante123")
+            estudiante.save()
+
+        # 2. Curso 1: Introducción Web
+        curso, _ = Curso.objects.update_or_create(
             slug="introduccion-web",
             defaults={
                 "titulo": "Introducción al Desarrollo Web",
@@ -84,10 +66,10 @@ class Command(BaseCommand):
             },
         )
 
-        mod1, _ = Modulo.objects.get_or_create(
+        mod1, _ = Modulo.objects.update_or_create(
             curso=curso, orden=1, defaults={"titulo": "Fundamentos", "descripcion": "Base web"}
         )
-        lec1, _ = Leccion.objects.get_or_create(
+        lec1, _ = Leccion.objects.update_or_create(
             modulo=mod1,
             orden=1,
             defaults={
@@ -97,7 +79,7 @@ class Command(BaseCommand):
                 "duracion_minutos": 15,
             },
         )
-        lec_quiz, _ = Leccion.objects.get_or_create(
+        lec_quiz, _ = Leccion.objects.update_or_create(
             modulo=mod1,
             orden=2,
             defaults={
@@ -108,7 +90,7 @@ class Command(BaseCommand):
             },
         )
 
-        eval_, created_eval = Evaluacion.objects.get_or_create(
+        eval_, _ = Evaluacion.objects.update_or_create(
             leccion=lec_quiz,
             defaults={
                 "titulo": "Quiz interactivo Canvas",
@@ -134,27 +116,6 @@ class Command(BaseCommand):
                 },
             },
         )
-        if not created_eval:
-            eval_.titulo = "Quiz interactivo Canvas"
-            eval_.canvas_schema = {
-                "width": 640,
-                "height": 360,
-                "background": "#0f172a",
-                "hotspots": [
-                    {"id": "a", "x": 160, "y": 180, "r": 36, "label": "Zona A"},
-                    {"id": "b", "x": 320, "y": 160, "r": 36, "label": "Zona B"},
-                    {"id": "c", "x": 480, "y": 200, "r": 36, "label": "Zona C"},
-                ],
-                "items": [
-                    {"id": "html", "label": "HTML", "x": 40, "y": 40},
-                    {"id": "css", "label": "CSS", "x": 40, "y": 100},
-                ],
-                "targets": [
-                    {"id": "markup", "label": "Marcato", "x": 400, "y": 40, "w": 160, "h": 48},
-                    {"id": "estilo", "label": "Estilos", "x": 400, "y": 100, "w": 160, "h": 48},
-                ],
-            }
-            eval_.save()
 
         Pregunta.objects.update_or_create(
             evaluacion=eval_,
@@ -180,9 +141,7 @@ class Command(BaseCommand):
                 "tipo": Pregunta.Tipo.CANVAS_ARRASTRAR,
                 "puntaje": 40,
                 "opciones": [],
-                "respuesta_correcta": {
-                    "asignaciones": {"html": "markup", "css": "estilo"}
-                },
+                "respuesta_correcta": {"asignaciones": {"html": "markup", "css": "estilo"}},
                 "canvas_config": {
                     "items": eval_.canvas_schema["items"],
                     "targets": eval_.canvas_schema["targets"],
@@ -207,12 +166,12 @@ class Command(BaseCommand):
             },
         )
 
-        Inscripcion.objects.get_or_create(
+        Inscripcion.objects.update_or_create(
             estudiante=estudiante, curso=curso, defaults={"origen": "web"}
         )
 
-        # Curso 2: Docker
-        curso_docker, _ = Curso.objects.get_or_create(
+        # 3. Curso 2: Docker
+        curso_docker, _ = Curso.objects.update_or_create(
             slug="introduccion-docker",
             defaults={
                 "titulo": "Introducción a Docker",
@@ -223,10 +182,10 @@ class Command(BaseCommand):
             },
         )
 
-        mod_docker_1, _ = Modulo.objects.get_or_create(
+        mod_docker_1, _ = Modulo.objects.update_or_create(
             curso=curso_docker, orden=1, defaults={"titulo": "Conceptos Básicos", "descripcion": "Qué es Docker y contenedores"}
         )
-        Leccion.objects.get_or_create(
+        Leccion.objects.update_or_create(
             modulo=mod_docker_1,
             orden=1,
             defaults={
@@ -236,7 +195,7 @@ class Command(BaseCommand):
                 "duracion_minutos": 20,
             },
         )
-        lec_docker_quiz, _ = Leccion.objects.get_or_create(
+        lec_docker_quiz, _ = Leccion.objects.update_or_create(
             modulo=mod_docker_1,
             orden=2,
             defaults={
@@ -247,7 +206,7 @@ class Command(BaseCommand):
             },
         )
 
-        eval_docker, created_eval = Evaluacion.objects.get_or_create(
+        eval_docker, _ = Evaluacion.objects.update_or_create(
             leccion=lec_docker_quiz,
             defaults={
                 "titulo": "Quiz: Conceptos Docker",
@@ -300,12 +259,12 @@ class Command(BaseCommand):
             },
         )
 
-        Inscripcion.objects.get_or_create(
+        Inscripcion.objects.update_or_create(
             estudiante=estudiante, curso=curso_docker, defaults={"origen": "web"}
         )
 
-        # Curso 3: Kubernetes
-        curso_k8s, _ = Curso.objects.get_or_create(
+        # 4. Curso 3: Kubernetes
+        curso_k8s, _ = Curso.objects.update_or_create(
             slug="introduccion-kubernetes",
             defaults={
                 "titulo": "Introducción a Kubernetes",
@@ -316,10 +275,10 @@ class Command(BaseCommand):
             },
         )
 
-        mod_k8s_1, _ = Modulo.objects.get_or_create(
+        mod_k8s_1, _ = Modulo.objects.update_or_create(
             curso=curso_k8s, orden=1, defaults={"titulo": "Fundamentos K8s", "descripcion": "Arquitectura y componentes"}
         )
-        Leccion.objects.get_or_create(
+        Leccion.objects.update_or_create(
             modulo=mod_k8s_1,
             orden=1,
             defaults={
@@ -329,7 +288,7 @@ class Command(BaseCommand):
                 "duracion_minutos": 25,
             },
         )
-        lec_k8s_quiz, _ = Leccion.objects.get_or_create(
+        lec_k8s_quiz, _ = Leccion.objects.update_or_create(
             modulo=mod_k8s_1,
             orden=2,
             defaults={
@@ -340,7 +299,7 @@ class Command(BaseCommand):
             },
         )
 
-        eval_k8s, _ = Evaluacion.objects.get_or_create(
+        eval_k8s, _ = Evaluacion.objects.update_or_create(
             leccion=lec_k8s_quiz,
             defaults={
                 "titulo": "Quiz: Conceptos Kubernetes",
@@ -393,12 +352,12 @@ class Command(BaseCommand):
             },
         )
 
-        Inscripcion.objects.get_or_create(
+        Inscripcion.objects.update_or_create(
             estudiante=estudiante, curso=curso_k8s, defaults={"origen": "web"}
         )
 
-        # Curso 4: PHP - Laravel
-        curso_laravel, _ = Curso.objects.get_or_create(
+        # 5. Curso 4: PHP - Laravel
+        curso_laravel, _ = Curso.objects.update_or_create(
             slug="introduccion-laravel",
             defaults={
                 "titulo": "Introducción a PHP - Laravel",
@@ -409,10 +368,10 @@ class Command(BaseCommand):
             },
         )
 
-        mod_laravel_1, _ = Modulo.objects.get_or_create(
+        mod_laravel_1, _ = Modulo.objects.update_or_create(
             curso=curso_laravel, orden=1, defaults={"titulo": "Fundamentos Laravel", "descripcion": "Inicio rápido"}
         )
-        Leccion.objects.get_or_create(
+        Leccion.objects.update_or_create(
             modulo=mod_laravel_1,
             orden=1,
             defaults={
@@ -422,7 +381,7 @@ class Command(BaseCommand):
                 "duracion_minutos": 20,
             },
         )
-        lec_laravel_quiz, _ = Leccion.objects.get_or_create(
+        lec_laravel_quiz, _ = Leccion.objects.update_or_create(
             modulo=mod_laravel_1,
             orden=2,
             defaults={
@@ -433,7 +392,7 @@ class Command(BaseCommand):
             },
         )
 
-        eval_laravel, _ = Evaluacion.objects.get_or_create(
+        eval_laravel, _ = Evaluacion.objects.update_or_create(
             leccion=lec_laravel_quiz,
             defaults={
                 "titulo": "Quiz: Conceptos Laravel",
@@ -486,12 +445,12 @@ class Command(BaseCommand):
             },
         )
 
-        Inscripcion.objects.get_or_create(
+        Inscripcion.objects.update_or_create(
             estudiante=estudiante, curso=curso_laravel, defaults={"origen": "web"}
         )
 
-        # Curso 5: Python - Django
-        curso_django, _ = Curso.objects.get_or_create(
+        # 6. Curso 5: Python - Django
+        curso_django, _ = Curso.objects.update_or_create(
             slug="introduccion-django",
             defaults={
                 "titulo": "Introducción a Python - Django",
@@ -502,10 +461,10 @@ class Command(BaseCommand):
             },
         )
 
-        mod_django_1, _ = Modulo.objects.get_or_create(
+        mod_django_1, _ = Modulo.objects.update_or_create(
             curso=curso_django, orden=1, defaults={"titulo": "Django Basics", "descripcion": "Estructura y configuración"}
         )
-        Leccion.objects.get_or_create(
+        Leccion.objects.update_or_create(
             modulo=mod_django_1,
             orden=1,
             defaults={
@@ -515,7 +474,7 @@ class Command(BaseCommand):
                 "duracion_minutos": 25,
             },
         )
-        lec_django_quiz, _ = Leccion.objects.get_or_create(
+        lec_django_quiz, _ = Leccion.objects.update_or_create(
             modulo=mod_django_1,
             orden=2,
             defaults={
@@ -526,7 +485,7 @@ class Command(BaseCommand):
             },
         )
 
-        eval_django, _ = Evaluacion.objects.get_or_create(
+        eval_django, _ = Evaluacion.objects.update_or_create(
             leccion=lec_django_quiz,
             defaults={
                 "titulo": "Quiz: Conceptos Django",
@@ -579,12 +538,12 @@ class Command(BaseCommand):
             },
         )
 
-        Inscripcion.objects.get_or_create(
+        Inscripcion.objects.update_or_create(
             estudiante=estudiante, curso=curso_django, defaults={"origen": "web"}
         )
 
-        # Curso 6: Python - Django REST Framework
-        curso_drf, _ = Curso.objects.get_or_create(
+        # 7. Curso 6: Python - Django REST Framework
+        curso_drf, _ = Curso.objects.update_or_create(
             slug="introduccion-django-rest-framework",
             defaults={
                 "titulo": "Introducción a Python - Django REST Framework",
@@ -595,10 +554,10 @@ class Command(BaseCommand):
             },
         )
 
-        mod_drf_1, _ = Modulo.objects.get_or_create(
+        mod_drf_1, _ = Modulo.objects.update_or_create(
             curso=curso_drf, orden=1, defaults={"titulo": "REST API Basics", "descripcion": "Conceptos de API REST"}
         )
-        Leccion.objects.get_or_create(
+        Leccion.objects.update_or_create(
             modulo=mod_drf_1,
             orden=1,
             defaults={
@@ -608,7 +567,7 @@ class Command(BaseCommand):
                 "duracion_minutos": 25,
             },
         )
-        lec_drf_quiz, _ = Leccion.objects.get_or_create(
+        lec_drf_quiz, _ = Leccion.objects.update_or_create(
             modulo=mod_drf_1,
             orden=2,
             defaults={
@@ -619,7 +578,7 @@ class Command(BaseCommand):
             },
         )
 
-        eval_drf, _ = Evaluacion.objects.get_or_create(
+        eval_drf, _ = Evaluacion.objects.update_or_create(
             leccion=lec_drf_quiz,
             defaults={
                 "titulo": "Quiz: Django REST Framework",
@@ -653,7 +612,7 @@ class Command(BaseCommand):
             evaluacion=eval_drf,
             orden=3,
             defaults={
-                "enunciado": "La autenticación en DRF se configura mediante classes de autenticación.",
+                "enunciado": "La autenticación en DRF se configura mediante clases de autenticación.",
                 "tipo": Pregunta.Tipo.VERDADERO_FALSO,
                 "puntaje": 25,
                 "opciones": [True, False],
@@ -672,12 +631,12 @@ class Command(BaseCommand):
             },
         )
 
-        Inscripcion.objects.get_or_create(
+        Inscripcion.objects.update_or_create(
             estudiante=estudiante, curso=curso_drf, defaults={"origen": "web"}
         )
 
-        self.stdout.write(self.style.SUCCESS("Demo lista."))
+        self.stdout.write(self.style.SUCCESS("Demo cargada y actualizada exitosamente."))
         self.stdout.write("  admin / admin123")
         self.stdout.write("  instructor / instructor123")
         self.stdout.write("  estudiante / estudiante123")
-        self.stdout.write(f"  6 cursos creados: web, docker, k8s, laravel, django, drf")
+        self.stdout.write("  6 cursos procesados: web, docker, k8s, laravel, django, drf")
