@@ -3,27 +3,30 @@ import { getAuditoria, unwrap } from '../services/adminService'
 import styles from './Admin.module.css'
 
 const ACCION_INFO = {
-  auto: { label: 'Auto-calificado', color: '#6b7280', bg: '#f3f4f6' },
-  manual: { label: 'Manual', color: '#d97706', bg: '#fffbeb' },
-  revision: { label: 'Revisión', color: '#6366f1', bg: '#eef2ff' },
-  correccion: { label: 'Corrección', color: '#dc2626', bg: '#fef2f2' },
+  calificacion_manual: { label: 'Calificación manual', color: '#d97706', bg: '#fffbeb' },
+  ajuste: { label: 'Ajuste de puntaje', color: '#6366f1', bg: '#eef2ff' },
+  revocacion: { label: 'Revocación', color: '#dc2626', bg: '#fef2f2' },
 }
 
 export default function AdminAuditoria() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filtroAccion, setFiltroAccion] = useState('')
   const toastRef = useRef(null)
 
   const cargar = async () => {
     setLoading(true)
+    setError('')
     try {
       const params = { page_size: 100 }
       if (search) params.search = search
       if (filtroAccion) params.accion = filtroAccion
       const { data } = await getAuditoria(params)
       setLogs(unwrap(data))
+    } catch {
+      setError('No se pudieron cargar los registros de auditoría.')
     } finally {
       setLoading(false)
     }
@@ -55,14 +58,18 @@ export default function AdminAuditoria() {
             />
             <select className={styles.select} value={filtroAccion} onChange={(e) => setFiltroAccion(e.target.value)}>
               <option value="">Todas las acciones</option>
-              <option value="auto">Auto-calificado</option>
-              <option value="manual">Manual</option>
-              <option value="revision">Revisión</option>
-              <option value="correccion">Corrección</option>
+              <option value="calificacion_manual">Calificación manual</option>
+              <option value="ajuste">Ajuste de puntaje</option>
+              <option value="revocacion">Revocación</option>
             </select>
           </div>
         </div>
 
+        {error && (
+          <p style={{ margin: '0 0 1rem', padding: '0.65rem 0.9rem', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 9, fontSize: '0.82rem' }}>
+            {error}
+          </p>
+        )}
         {loading ? (
           <div className={styles.stateWrap}><div className={styles.spinner} /></div>
         ) : logs.length === 0 ? (
@@ -88,7 +95,7 @@ export default function AdminAuditoria() {
               </thead>
               <tbody>
                 {logs.map((log) => {
-                  const ai = ACCION_INFO[log.accion] || ACCION_INFO.auto
+                  const ai = ACCION_INFO[log.accion] || ACCION_INFO.calificacion_manual
                   return (
                     <tr key={log.id}>
                       <td>

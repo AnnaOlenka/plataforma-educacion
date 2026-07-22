@@ -165,23 +165,35 @@ def validar_pregunta(
 
 
 def calificar_intento(evaluacion, respuestas: dict, canvas_payload: dict) -> dict:
-    """Califica todas las preguntas y arma el resumen del intento."""
+    """
+    Califica todas las preguntas y arma el resumen del intento.
+
+    Las preguntas 'canvas_dibujo' (trazo libre) no tienen forma automática de
+    validarse contra una región — se excluyen del cálculo de % y quedan como
+    puntos_pendientes hasta que un instructor las califique manualmente
+    (ver InstructorIntentoViewSet.calificar).
+    """
     detalle = []
     total = 0
     obtenidos = 0
+    pendiente_max = 0
     for pregunta in evaluacion.preguntas.all():
-        total += pregunta.puntaje
         resp = _get_respuesta(respuestas, pregunta.id)
         canvas_item = _get_canvas_item(canvas_payload, pregunta.id)
         resultado = validar_pregunta(pregunta, resp, canvas_item)
         detalle.append(resultado)
+        if pregunta.tipo == pregunta.Tipo.CANVAS_DIBUJO:
+            pendiente_max += pregunta.puntaje
+            continue
+        total += pregunta.puntaje
         obtenidos += resultado["puntaje"]
 
     pct = round((obtenidos / total * 100) if total else 0, 2)
     return {
         "detalle_calificacion": detalle,
         "puntaje": pct,
-        "aprobado": pct >= evaluacion.puntaje_aprobacion,
+        "aprobado": pct >= evaluacion.puntaje_aprobacion and pendiente_max == 0,
         "puntos_obtenidos": obtenidos,
-        "puntos_totales": total,
+        "puntos_totales": total + pendiente_max,
+        "puntos_pendientes": pendiente_max,
     }

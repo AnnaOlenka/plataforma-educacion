@@ -142,6 +142,9 @@ export default function EvaluacionRunner() {
 
   const responderCanvas = (pregunta, item) => {
     setCanvasPayload((c) => ({ ...c, [pregunta.id]: item }))
+    // canvas_dibujo es trazo libre: no hay forma de validarlo en tiempo real,
+    // se califica manualmente (ver InstructorCalificaciones). Evita llamadas inútiles.
+    if (pregunta.tipo === 'canvas_dibujo') return
     validar(pregunta, { respuesta: null, canvas_payload: item })
   }
 
@@ -462,6 +465,11 @@ function Resultado({ evaluacion, resultado, preguntas, onReintentar, onVolver })
             ? `Superaste el ${evaluacion.puntaje_aprobacion}% requerido.`
             : `Necesitabas ${evaluacion.puntaje_aprobacion}% para aprobar.`}
         </p>
+        {revision && resultado.puntos_pendientes > 0 && (
+          <p className={styles.resultSub} style={{ marginTop: '0.4rem' }}>
+            {resultado.puntos_pendientes} pts de preguntas de dibujo aún no están incluidos en el puntaje mostrado.
+          </p>
+        )}
       </div>
 
       {/* Columna derecha: detalle + acciones */}

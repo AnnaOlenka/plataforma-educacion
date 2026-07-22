@@ -156,34 +156,59 @@ export default function InstructorCalificaciones() {
   )
 }
 
+const esManual = (d) => d.tipo === 'canvas_dibujo' || d.detalle?.tipo === 'canvas_dibujo'
+
 function GradeModal({ intento, onClose, onSaved, notify }) {
-  const [puntaje, setPuntaje] = useState(Math.round(Number(intento.puntaje || 0)))
+  const detalle = intento.detalle_calificacion || []
+  const yaRevisado = intento.estado === 'revisado'
+
+  const puntosTotales = detalle.reduce((s, d) => s + (d.puntaje_max || 0), 0)
+  const puntosAutoSum = detalle.filter((d) => !esManual(d)).reduce((s, d) => s + (d.puntaje || 0), 0)
+
+  // Puntos otorgados a cada pregunta de dibujo (calificación manual explícita,
+  // no una adivinanza sobre el % final). Si ya se revisó antes, reconstruye lo
+  // guardado; si es la primera revisión, arranca en 0 — nunca se auto-otorgan.
+  const [manualPts, setManualPts] = useState(() => {
+    const init = {}
+    detalle.forEach((d, i) => {
+      if (!esManual(d)) return
+      init[i] = yaRevisado
+        ? Math.max(0, Math.round((Number(intento.puntaje) / 100) * puntosTotales) - puntosAutoSum)
+        : 0
+    })
+    return init
+  })
   const [aprobado, setAprobado] = useState(!!intento.aprobado)
   const [feedback, setFeedback] = useState(intento.feedback_instructor || '')
   const [saving, setSaving] = useState(false)
 
-  const yaRevisado = intento.estado === 'revisado'
-  const detalleRaw = intento.detalle_calificacion || []
-  // Si ya fue revisado manualmente, actualizar el puntaje del ítem dibujo con lo real
-  const detalle = detalleRaw.map((d) => {
-    const esManual = d.tipo === 'canvas_dibujo' || d.detalle?.tipo === 'canvas_dibujo'
-    if (esManual && yaRevisado) {
-      const ptosAuto = detalleRaw.filter(x => x.tipo !== 'canvas_dibujo' && x.detalle?.tipo !== 'canvas_dibujo').reduce((s, x) => s + (x.puntaje || 0), 0)
-      const ptosManual = Math.max(0, Math.round((Number(intento.puntaje) / 100) * (detalleRaw.reduce((s, x) => s + (x.puntaje_max || 0), 0))) - ptosAuto)
-      return { ...d, puntaje: ptosManual }
-    }
-    return d
-  })
+  const puntosManualSum = Object.values(manualPts).reduce((s, v) => s + (Number(v) || 0), 0)
+  const puntajeSugerido = puntosTotales ? Math.round(((puntosAutoSum + puntosManualSum) / puntosTotales) * 100) : 0
+  const [puntaje, setPuntaje] = useState(puntajeSugerido)
+  // Recalcula el % sugerido cada vez que el instructor ajusta los puntos de dibujo.
+  useEffect(() => { setPuntaje(puntajeSugerido) }, [puntosManualSum]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const respuestas = intento.respuestas || {}
   const canvas = intento.canvas_payload || {}
+
+  const setPuntosManual = (idx, valor, max) => {
+    const num = Math.max(0, Math.min(Number(valor) || 0, max))
+    setManualPts((prev) => ({ ...prev, [idx]: num }))
+  }
 
   const guardar = async () => {
     setSaving(true)
     try {
+      const detalleActualizado = detalle.map((d, i) =>
+        esManual(d)
+          ? { ...d, puntaje: Number(manualPts[i] || 0), correcta: Number(manualPts[i] || 0) >= (d.puntaje_max || 0) }
+          : d
+      )
       const { data } = await calificarIntento(intento.id, {
         puntaje: Number(puntaje),
         aprobado,
         feedback_instructor: feedback,
+        detalle_calificacion: detalleActualizado,
       })
       onSaved(data)
     } catch (err) {
@@ -211,10 +236,10 @@ function GradeModal({ intento, onClose, onSaved, notify }) {
 
           {detalle.length > 0 && (
             <div className={styles.field}>
-              <label className={styles.label}>Auto-calificación por pregunta</label>
+              <label className={styles.label}>Calificación por pregunta</label>
               <div style={{ border: '1px solid #f3f4f6', borderRadius: 10, overflow: 'hidden' }}>
                 {detalle.map((d, i) => {
-                  const esManual = d.tipo === 'canvas_dibujo' || d.detalle?.tipo === 'canvas_dibujo'
+                  const manual = esManual(d)
                   return (
                     <div
                       key={i}
@@ -227,22 +252,37 @@ function GradeModal({ intento, onClose, onSaved, notify }) {
                       <span style={{
                         width: 22, height: 22, borderRadius: '50%', flexShrink: 0, color: '#fff',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: esManual ? '#d97706' : d.correcta ? '#16a34a' : '#dc2626',
+                        background: manual ? '#d97706' : d.correcta ? '#16a34a' : '#dc2626',
                       }}>
-                        {esManual ? <span style={{ fontSize: '0.65rem', fontWeight: 700 }}>•••</span> : d.correcta ? <IconCheck /> : <IconX />}
+                        {manual ? <span style={{ fontSize: '0.65rem', fontWeight: 700 }}>✎</span> : d.correcta ? <IconCheck /> : <IconX />}
                       </span>
                       <span style={{ flex: 1, fontSize: '0.82rem', color: '#6b7280' }}>
-                        {esManual ? 'Pendiente de revisión manual' : (d.feedback || `Pregunta ${i + 1}`)}
+                        {manual ? 'Dibujo — califica según lo dibujado abajo' : (d.feedback || `Pregunta ${i + 1}`)}
                       </span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: esManual ? '#d97706' : d.correcta ? '#16a34a' : '#9ca3af' }}>
-                        {d.puntaje}/{d.puntaje_max} pts
-                      </span>
+                      {manual ? (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <input
+                            type="number"
+                            min="0"
+                            max={d.puntaje_max}
+                            value={manualPts[i] ?? 0}
+                            onChange={(e) => setPuntosManual(i, e.target.value, d.puntaje_max)}
+                            className={styles.input}
+                            style={{ width: 60, height: 30, padding: '0 0.4rem', textAlign: 'center' }}
+                          />
+                          <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>/{d.puntaje_max} pts</span>
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: d.correcta ? '#16a34a' : '#9ca3af' }}>
+                          {d.puntaje}/{d.puntaje_max} pts
+                        </span>
+                      )}
                     </div>
                   )
                 })}
               </div>
               <span className={styles.hint}>
-                Puntaje automático: {Math.round(Number(intento.puntaje_automatico || 0))}%
+                Auto-calificado: {puntosAutoSum} pts · Dibujo (asignado arriba): {puntosManualSum} pts · % sugerido: {puntajeSugerido}%
               </span>
             </div>
           )}

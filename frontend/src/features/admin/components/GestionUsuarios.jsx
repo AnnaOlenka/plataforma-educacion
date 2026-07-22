@@ -71,7 +71,7 @@ export default function GestionUsuarios() {
 
   const openEdit = (u) => {
     setEditUser(u)
-    editForm.reset({ first_name: u.first_name, last_name: u.last_name, email: u.email, username: u.username, is_active: String(u.is_active) })
+    editForm.reset({ first_name: u.first_name, last_name: u.last_name, email: u.email, username: u.username, rol: u.rol, is_active: String(u.is_active) })
     setApiError('')
   }
 
@@ -87,11 +87,11 @@ export default function GestionUsuarios() {
   }
 
   const onEliminar = async (id) => {
-    if (!window.confirm('¿Eliminar este usuario?')) return
+    if (!window.confirm('¿Desactivar este usuario? No podrá iniciar sesión, pero su cuenta e historial se conservan.')) return
     setDeleting(id)
     try {
       await deleteUsuario(id)
-      setUsuarios((prev) => prev.filter((u) => u.id !== id))
+      setUsuarios((prev) => prev.map((u) => (u.id === id ? { ...u, is_active: false } : u)))
     } finally { setDeleting(null) }
   }
 
@@ -222,7 +222,12 @@ export default function GestionUsuarios() {
                       <button className={styles.btnEdit} onClick={() => openEdit(u)} title="Editar">
                         <IconEdit />
                       </button>
-                      <button className={styles.btnDelete} onClick={() => onEliminar(u.id)} disabled={deleting === u.id} title="Eliminar">
+                      <button
+                        className={styles.btnDelete}
+                        onClick={() => onEliminar(u.id)}
+                        disabled={deleting === u.id || !u.is_active}
+                        title={u.is_active ? 'Desactivar' : 'Ya está inactivo'}
+                      >
                         <IconTrash />
                       </button>
                     </div>
@@ -341,7 +346,15 @@ export default function GestionUsuarios() {
                   })} />
                   {editForm.formState.errors.email && <span>{editForm.formState.errors.email.message}</span>}
                 </div>
-                <div className={`${styles.field} ${styles.fullWidth}`}>
+                <div className={styles.field}>
+                  <label>Rol</label>
+                  <select {...editForm.register('rol', { required: 'Requerido' })}>
+                    <option value="estudiante">Estudiante</option>
+                    <option value="instructor">Instructor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div className={styles.field}>
                   <label>Estado</label>
                   <select {...editForm.register('is_active')}>
                     <option value="true">Activo</option>

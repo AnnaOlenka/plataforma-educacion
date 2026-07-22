@@ -211,6 +211,7 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
         data = IntentoSerializer(intento).data
         data["puntos_obtenidos"] = resultado["puntos_obtenidos"]
         data["puntos_totales"] = resultado["puntos_totales"]
+        data["puntos_pendientes"] = resultado.get("puntos_pendientes", 0)
         data["requiere_revision"] = requiere_revision
         return Response(data, status=status.HTTP_201_CREATED)
 
