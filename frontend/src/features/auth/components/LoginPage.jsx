@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { login } from '../services/authService'
 import useAuthStore from '../../../store/authStore'
+import { getHomeRouteForRole } from '../../../router/routes'
 import styles from './LoginPage.module.css'
 
 const IconMail = () => (
@@ -41,6 +42,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const setAuth = useAuthStore((s) => s.setAuth)
   const navigate = useNavigate()
+  const location = useLocation()
 
   const onSubmit = async ({ email, password }) => {
     setLoading(true)
@@ -48,10 +50,9 @@ export default function LoginPage() {
     try {
       const { data } = await login(email, password)
       setAuth(data.user, data.access, data.refresh)
-      const role = data.user?.rol
-      if (role === 'admin') navigate('/admin')
-      else if (role === 'instructor') navigate('/instructor')
-      else navigate('/cursos')
+      const defaultHome = getHomeRouteForRole(data.user?.rol)
+      const destination = location.state?.from?.pathname || defaultHome
+      navigate(destination, { replace: true })
     } catch (err) {
       setApiError(err.response?.data?.detail || 'Credenciales incorrectas')
     } finally {

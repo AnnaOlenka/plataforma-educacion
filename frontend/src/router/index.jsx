@@ -1,132 +1,187 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import LoginPage from '../features/auth/components/LoginPage'
-import ForgotPasswordPage from '../features/auth/components/ForgotPasswordPage'
-import ResetPasswordPage from '../features/auth/components/ResetPasswordPage'
-import MainLayout from '../components/layout/MainLayout'
-import GestionUsuarios from '../features/admin/components/GestionUsuarios'
-import CatalogoCursos from '../features/cursos/components/CatalogoCursos'
-import MisCursos from '../features/cursos/components/MisCursos'
-import CursoDetalle from '../features/cursos/components/CursoDetalle'
-import CursoAprendizaje from '../features/cursos/components/CursoAprendizaje'
-import EvaluacionesIndex from '../features/evaluaciones/components/EvaluacionesIndex'
-import EvaluacionRunner from '../features/evaluaciones/components/EvaluacionRunner'
-import InstructorDashboard from '../features/instructor/components/InstructorDashboard'
-import InstructorCursos from '../features/instructor/components/InstructorCursos'
-import CursoEditor from '../features/instructor/components/CursoEditor'
-import InstructorCalificaciones from '../features/instructor/components/InstructorCalificaciones'
-import InstructorAnalitica from '../features/instructor/components/InstructorAnalitica'
-import AdminDashboard from '../features/admin/components/AdminDashboard'
-import AdminCursos from '../features/admin/components/AdminCursos'
-import AdminAuditoria from '../features/admin/components/AdminAuditoria'
-import AdminAnaliticas from '../features/admin/components/AdminAnaliticas'
-import UserProfile from '../features/perfil/components/UserProfile'
-import MiProgreso from '../features/progreso/components/MiProgreso'
-import MisCertificados from '../features/certificados/components/MisCertificados'
-import VerificarCertificado from '../features/certificados/components/VerificarCertificado'
-import RegisterPage from '../features/auth/components/RegisterPage'
+import ProtectedRoute from './ProtectedRoute'
+import GuestRoute from './GuestRoute'
+import { ROUTES, getHomeRouteForRole } from './routes'
 import useAuthContext from '../hooks/useAuthContext'
+import PageLoader from '../components/common/PageLoader'
+import ErrorBoundary from '../components/common/ErrorBoundary'
+import NotFoundPage from '../components/common/NotFoundPage'
+import ForbiddenPage from '../components/common/ForbiddenPage'
 
-function ProtectedRoute({ children, roles }) {
+// Layout principal (importación síncrona para evitar parpadeos de contenedor principal)
+import MainLayout from '../components/layout/MainLayout'
+
+// Páginas públicas / Auth (Carga diferida con React.lazy)
+const LoginPage = lazy(() => import('../features/auth/components/LoginPage'))
+const RegisterPage = lazy(() => import('../features/auth/components/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('../features/auth/components/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('../features/auth/components/ResetPasswordPage'))
+
+// Páginas de Admin
+const AdminDashboard = lazy(() => import('../features/admin/components/AdminDashboard'))
+const GestionUsuarios = lazy(() => import('../features/admin/components/GestionUsuarios'))
+const AdminCursos = lazy(() => import('../features/admin/components/AdminCursos'))
+const AdminAuditoria = lazy(() => import('../features/admin/components/AdminAuditoria'))
+const AdminAnaliticas = lazy(() => import('../features/admin/components/AdminAnaliticas'))
+
+// Páginas de Instructor
+const InstructorDashboard = lazy(() => import('../features/instructor/components/InstructorDashboard'))
+const InstructorCursos = lazy(() => import('../features/instructor/components/InstructorCursos'))
+const CursoEditor = lazy(() => import('../features/instructor/components/CursoEditor'))
+const InstructorCalificaciones = lazy(() => import('../features/instructor/components/InstructorCalificaciones'))
+const InstructorAnalitica = lazy(() => import('../features/instructor/components/InstructorAnalitica'))
+
+// Páginas de Cursos / Estudiante
+const MisCursos = lazy(() => import('../features/cursos/components/MisCursos'))
+const CatalogoCursos = lazy(() => import('../features/cursos/components/CatalogoCursos'))
+const CursoDetalle = lazy(() => import('../features/cursos/components/CursoDetalle'))
+const CursoAprendizaje = lazy(() => import('../features/cursos/components/CursoAprendizaje'))
+
+// Evaluaciones, Progreso, Certificados y Perfil
+const EvaluacionesIndex = lazy(() => import('../features/evaluaciones/components/EvaluacionesIndex'))
+const EvaluacionRunner = lazy(() => import('../features/evaluaciones/components/EvaluacionRunner'))
+const UserProfile = lazy(() => import('../features/perfil/components/UserProfile'))
+const MiProgreso = lazy(() => import('../features/progreso/components/MiProgreso'))
+const MisCertificados = lazy(() => import('../features/certificados/components/MisCertificados'))
+const VerificarCertificado = lazy(() => import('../features/certificados/components/VerificarCertificado'))
+
+function RootRedirect() {
   const { token, user } = useAuthContext()
-  if (!token) return <Navigate to="/login" replace />
-  if (roles && user && !roles.includes(user.rol)) return <Navigate to="/login" replace />
-  return children
+  if (!token || !user) {
+    return <Navigate to={ROUTES.LOGIN} replace />
+  }
+  return <Navigate to={getHomeRouteForRole(user.rol)} replace />
 }
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/recuperar-cuenta" element={<ResetPasswordPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Redirección dinámica en la raíz '/' */}
+            <Route path="/" element={<RootRedirect />} />
 
-        {/* Admin */}
-        <Route path="/admin" element={
-          <ProtectedRoute roles={['admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="usuarios" element={<GestionUsuarios />} />
-          <Route path="cursos" element={<AdminCursos />} />
-          <Route path="auditoria" element={<AdminAuditoria />} />
-          <Route path="analiticas" element={<AdminAnaliticas />} />
-        </Route>
+            {/* Rutas Públicas de Autenticación (Bloqueadas si ya está autenticado) */}
+            <Route path={ROUTES.LOGIN} element={<GuestRoute><LoginPage /></GuestRoute>} />
+            <Route path={ROUTES.REGISTER} element={<GuestRoute><RegisterPage /></GuestRoute>} />
+            <Route path={ROUTES.FORGOT_PASSWORD} element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+            <Route path={ROUTES.RESET_PASSWORD} element={<GuestRoute><ResetPasswordPage /></GuestRoute>} />
 
-        {/* Perfil (todos los roles autenticados) */}
-        <Route path="/perfil" element={
-          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<UserProfile />} />
-        </Route>
+            {/* Verificación pública de certificados (sin requerir auth) */}
+            <Route path={ROUTES.VERIFICAR_PUBLIC} element={<VerificarCertificado />} />
+            <Route path={ROUTES.VERIFICAR_CODIGO_PUBLIC} element={<VerificarCertificado />} />
 
-        {/* Instructor */}
-        <Route path="/instructor" element={
-          <ProtectedRoute roles={['instructor', 'admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<InstructorDashboard />} />
-          <Route path="cursos" element={<InstructorCursos />} />
-          <Route path="cursos/:slug/editar" element={<CursoEditor />} />
-          <Route path="cursos/:slug/analitica" element={<InstructorAnalitica />} />
-          <Route path="calificaciones" element={<InstructorCalificaciones />} />
-          <Route path="analiticas" element={<InstructorAnalitica />} />
-        </Route>
+            {/* Área de Administración (Sólo rol 'admin') */}
+            <Route
+              path={ROUTES.ADMIN.ROOT}
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="usuarios" element={<GestionUsuarios />} />
+              <Route path="cursos" element={<AdminCursos />} />
+              <Route path="auditoria" element={<AdminAuditoria />} />
+              <Route path="analiticas" element={<AdminAnaliticas />} />
+            </Route>
 
-        {/* Estudiante (y navegación de cursos compartida) */}
-        <Route path="/cursos" element={
-          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<MisCursos />} />
-          <Route path="catalogo" element={<CatalogoCursos />} />
-          <Route path=":slug" element={<CursoDetalle />} />
-          <Route path=":slug/aprender" element={<CursoAprendizaje />} />
-        </Route>
+            {/* Área de Instructor (Roles 'instructor' y 'admin') */}
+            <Route
+              path={ROUTES.INSTRUCTOR.ROOT}
+              element={
+                <ProtectedRoute roles={['instructor', 'admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<InstructorDashboard />} />
+              <Route path="cursos" element={<InstructorCursos />} />
+              <Route path="cursos/:slug/editar" element={<CursoEditor />} />
+              <Route path="cursos/:slug/analitica" element={<InstructorAnalitica />} />
+              <Route path="calificaciones" element={<InstructorCalificaciones />} />
+              <Route path="analiticas" element={<InstructorAnalitica />} />
+            </Route>
 
-        {/* Progreso */}
-        <Route path="/progreso" element={
-          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<MiProgreso />} />
-        </Route>
+            {/* Cursos y Aprendizaje (Todos los usuarios autenticados) */}
+            <Route
+              path={ROUTES.CURSOS.ROOT}
+              element={
+                <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<MisCursos />} />
+              <Route path="catalogo" element={<CatalogoCursos />} />
+              <Route path=":slug" element={<CursoDetalle />} />
+              <Route path=":slug/aprender" element={<CursoAprendizaje />} />
+            </Route>
 
-        {/* Certificados autenticados */}
-        <Route path="/certificados" element={
-          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<MisCertificados />} />
-          <Route path="verificar/:codigo" element={<VerificarCertificado />} />
-        </Route>
+            {/* Perfil del Usuario */}
+            <Route
+              path={ROUTES.PERFIL}
+              element={
+                <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<UserProfile />} />
+            </Route>
 
-        {/* Verificación pública (sin auth) */}
-        <Route path="/verificar/:codigo" element={<VerificarCertificado />} />
-        <Route path="/verificar" element={<VerificarCertificado />} />
+            {/* Progreso del Estudiante */}
+            <Route
+              path={ROUTES.PROGRESO}
+              element={
+                <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<MiProgreso />} />
+            </Route>
 
-        {/* Evaluaciones (estudiante, instructor, admin) */}
-        <Route path="/evaluaciones" element={
-          <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<EvaluacionesIndex />} />
-          <Route path="leccion/:leccionId" element={<EvaluacionRunner />} />
-        </Route>
+            {/* Certificados */}
+            <Route
+              path={ROUTES.CERTIFICADOS}
+              element={
+                <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<MisCertificados />} />
+              <Route path="verificar/:codigo" element={<VerificarCertificado />} />
+            </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+            {/* Evaluaciones */}
+            <Route
+              path={ROUTES.EVALUACIONES}
+              element={
+                <ProtectedRoute roles={['estudiante', 'instructor', 'admin']}>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<EvaluacionesIndex />} />
+              <Route path="leccion/:leccionId" element={<EvaluacionRunner />} />
+            </Route>
+
+            {/* Páginas de Error Explícitas */}
+            <Route path={ROUTES.ERROR_403} element={<ForbiddenPage />} />
+            <Route path={ROUTES.ERROR_404} element={<NotFoundPage />} />
+
+            {/* Captura de Cualquier Ruta No Encontrada (404) */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
